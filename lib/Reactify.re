@@ -55,9 +55,8 @@ module Make = (ReconcilerImpl: Reconciler) => {
 
   let _currentEffects: ref(list(effect)) = ref([]);
   let _unsafeResetEffects = () => _currentEffects := [];
-  let _unsafeAddEffect = (e) => {
-        _currentEffects := List.append(_currentEffects^, [e]);
-  };
+  let _unsafeAddEffect = e =>
+    _currentEffects := List.append(_currentEffects^, [e]);
   let _unsafeGetEffects = () => _currentEffects^;
 
   type container = {
@@ -73,16 +72,20 @@ module Make = (ReconcilerImpl: Reconciler) => {
   type componentFunction = unit => component;
 
   let component = (~children=[], c: componentFunction) => {
-        let ret: component = {
-            render: () => {
-                _unsafeResetEffects();
-                let children: list(component) = [c()];
-                let effects = _unsafeGetEffects();
-                let renderResult: elementWithChildren = (Component, children, effects);
-                renderResult;
-           },
-       };
-       ret;
+    let ret: component = {
+      render: () => {
+        _unsafeResetEffects();
+        let children: list(component) = [c()];
+        let effects = _unsafeGetEffects();
+        let renderResult: elementWithChildren = (
+          Component,
+          children,
+          effects,
+        );
+        renderResult;
+      },
+    };
+    ret;
   };
 
   let primitiveComponent = (prim, ~children) => {
@@ -92,24 +95,28 @@ module Make = (ReconcilerImpl: Reconciler) => {
 
   let useEffect = (e: effect) => _unsafeAddEffect(e);
 
-  let _getEffectsFromInstance = (instance: option(instance)) => {
-        switch(instance) {
-        | None => []
-        | Some(i) => i.effectInstances
-}
+  let _getEffectsFromInstance = (instance: option(instance)) =>
+    switch (instance) {
+    | None => []
+    | Some(i) => i.effectInstances
     };
 
   /*
    * Instantiate turns a component function into a live instance,
    * and asks the reconciler to append it to the root node.
    */
-  let rec instantiate = (rootNode, previousInstance: option(instance), component: component) => {
+  let rec instantiate =
+          (
+            rootNode,
+            previousInstance: option(instance),
+            component: component,
+          ) => {
     let previousEffectInstances = _getEffectsFromInstance(previousInstance);
-    List.iter((ei) => ei(), previousEffectInstances);
+    List.iter(ei => ei(), previousEffectInstances);
     let (element, children, effects) = component.render();
 
     /* TODO: Should this be deferred until we actually mount the component? */
-    let effectInstances = List.map((e) => e(), effects);
+    let effectInstances = List.map(e => e(), effects);
 
     let primitiveInstance =
       switch (element) {
@@ -147,18 +154,16 @@ module Make = (ReconcilerImpl: Reconciler) => {
     instance;
   };
 
-  let rec getFirstNode = (node: instance) => {
+  let rec getFirstNode = (node: instance) =>
     switch (node.node) {
     | Some(n) => Some(n)
-    | None => {
-        switch (node.childInstances) {
-        | [] => None
-        | [c] => getFirstNode(c)
-        | _ => None
-        };
+    | None =>
+      switch (node.childInstances) {
+      | [] => None
+      | [c] => getFirstNode(c)
+      | _ => None
+      }
     };
-    };
-  };
 
   let rec reconcile = (rootNode, instance, component) => {
     let newInstance = instantiate(rootNode, instance, component);
@@ -209,7 +214,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
               );
               newInstance;
             }
-          | (Some(a), None) => {
+          | (Some(a), None) =>
             /* If there was a non-primitive instance, we need to get the top-level node - */
             /* and then remove it */
             let currentNode = getFirstNode(i);
@@ -219,7 +224,6 @@ module Make = (ReconcilerImpl: Reconciler) => {
             };
             ReconcilerImpl.appendChild(rootNode, a);
             newInstance;
-            }
           | (None, Some(b)) =>
             ReconcilerImpl.removeChild(rootNode, b);
             newInstance;
@@ -248,12 +252,14 @@ module Make = (ReconcilerImpl: Reconciler) => {
     };
 
     /* Clean up existing children */
-    for(i in Array.length(newChildren) to Array.length(currentChildInstances) - 1) {
-        switch (currentChildInstances[i].node) {
-        | Some(n) => ReconcilerImpl.removeChild(root, n)
-        | _ => ()
-        }
-    }
+    for (i in
+         Array.length(newChildren) to
+         Array.length(currentChildInstances) - 1) {
+      switch (currentChildInstances[i].node) {
+      | Some(n) => ReconcilerImpl.removeChild(root, n)
+      | _ => ()
+      };
+    };
 
     newChildInstances^;
   };
