@@ -42,11 +42,13 @@ module Make = (ReconcilerImpl: Reconciler) => {
     node: option(ReconcilerImpl.node),
     rootNode: ReconcilerImpl.node,
     mutable childInstances,
+    mutable effectInstances,
   }
   and childInstances = list(instance)
   /* An effectInstance is an effect that was already instantiated - */
   /* it's an effect we'll have to run when the element is unmounted */
   and effectInstance = unit => unit
+  and effectInstances = list(effectInstance)
   /* An effect is a function sent to useEffect. We haven't run it yet, */
   /* But we will once the element is mounted */
   and effect = unit => effectInstance;
@@ -90,14 +92,24 @@ module Make = (ReconcilerImpl: Reconciler) => {
 
   let useEffect = (e: effect) => _unsafeAddEffect(e);
 
+  let _getEffectsFromInstance = (instance: option(instance)) => {
+        switch(instance) {
+        | None => []
+        | Some(i) => i.effectInstances
+}
+    };
+
   /*
    * Instantiate turns a component function into a live instance,
    * and asks the reconciler to append it to the root node.
    */
-  let rec instantiate = (rootNode, component: component) => {
+  let rec instantiate = (rootNode, previousInstance: option(instance), component: component) => {
+    let previousEffectInstances = _getEffectsFromInstance(previousInstance);
+    List.iter((ei) => ei(), previousEffectInstances);
     let (element, children, effects) = component.render();
 
-    List.iter((e) => ignore(e()), effects);
+    /* TODO: Should this be deferred until we actually mount the component? */
+    let effectInstances = List.map((e) => e(), effects);
 
     let primitiveInstance =
       switch (element) {
@@ -112,7 +124,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
       };
 
     let childInstances =
-      List.map(instantiate(nextRootPrimitiveInstance), children);
+      List.map(instantiate(nextRootPrimitiveInstance, None), children);
 
     let appendIfInstance = ci =>
       switch (ci.node) {
@@ -129,13 +141,14 @@ module Make = (ReconcilerImpl: Reconciler) => {
       rootNode: nextRootPrimitiveInstance,
       children,
       childInstances,
+      effectInstances,
     };
 
     instance;
   };
 
   let rec reconcile = (rootNode, instance, component) => {
-    let newInstance = instantiate(rootNode, component);
+    let newInstance = instantiate(rootNode, instance, component);
 
     let r =
       switch (instance) {
@@ -147,8 +160,6 @@ module Make = (ReconcilerImpl: Reconciler) => {
 
         newInstance;
       | Some(i) =>
-        let newInstance = instantiate(rootNode, component);
-
         let ret =
           switch (newInstance.node, i.node) {
           | (Some(a), Some(b)) =>
@@ -156,9 +167,11 @@ module Make = (ReconcilerImpl: Reconciler) => {
             switch (newInstance.element, i.element) {
             | (Primitive(oldPrim), Primitive(newPrim)) =>
               if (oldPrim != newPrim) {
+                print_endline ("1!");
                 /* Check if the primitive type is the same - if it is, we can simply update the node */
                 /* If not, we'll replace the node */
                 if (Utility.areConstructorsEqual(oldPrim, newPrim)) {
+                print_endline ("2!");
                   switch (newInstance.element) {
                   | Primitive(o) =>
                     ReconcilerImpl.updateInstance(b, o);
@@ -171,10 +184,12 @@ module Make = (ReconcilerImpl: Reconciler) => {
                     newInstance;
                   };
                 } else {
+                  print_endline ("REPLACING");
                   ReconcilerImpl.replaceChild(rootNode, a, b);
                   newInstance;
                 };
               } else {
+                print_endline ("3!");
                 /* The node itself is unchanged, so we'll just reconcile the children */
                 i.childInstances = reconcileChildren(i, newInstance);
                 i;
