@@ -82,27 +82,27 @@ test("useState updates state with set function", () => {
   validateStructure(rootNode, expectedStructure);
 });
 
-/* test("useState can update multiple times", () => { */
-/*   let rootNode = createRootNode(); */
+test("useState can update multiple times", () => {
+  let rootNode = createRootNode();
 
-/*   let container = TestReact.createContainer(rootNode); */
+  let container = TestReact.createContainer(rootNode);
 
-/*   let event: Event.t(int) = Event.create(); */
+  let event: Event.t(int) = Event.create();
 
-/*   TestReact.updateContainer(container, <componentThatUpdatesState event />); */
+  TestReact.updateContainer(container, <componentThatUpdatesState event />);
 
-/*   Event.dispatch(event, 5); */
-/*   let expectedStructure: tree(primitives) = */
-/*     TreeNode(Root, [TreeLeaf(A(5))]); */
-/*   validateStructure(rootNode, expectedStructure); */
+  Event.dispatch(event, 5);
+  let expectedStructure: tree(primitives) =
+    TreeNode(Root, [TreeLeaf(A(5))]);
+  validateStructure(rootNode, expectedStructure);
 
-/*   Event.dispatch(event, 6); */
-/*   let expectedStructure: tree(primitives) = */
-/*     TreeNode(Root, [TreeLeaf(A(6))]); */
-/*   validateStructure(rootNode, expectedStructure); */
+  Event.dispatch(event, 6);
+  let expectedStructure: tree(primitives) =
+    TreeNode(Root, [TreeLeaf(A(6))]);
+  validateStructure(rootNode, expectedStructure);
 
-/*   Event.dispatch(event, 7); */
-/*   let expectedStructure: tree(primitives) = */
-/*     TreeNode(Root, [TreeLeaf(A(7))]); */
-/*   validateStructure(rootNode, expectedStructure); */
-/* }); */
+  Event.dispatch(event, 7);
+  let expectedStructure: tree(primitives) =
+    TreeNode(Root, [TreeLeaf(A(7))]);
+  validateStructure(rootNode, expectedStructure);
+});

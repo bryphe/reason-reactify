@@ -68,21 +68,31 @@ module Make = (ReconcilerImpl: Reconciler) => {
   let _unsafeGetEffects = () => _currentEffects^;
 
   type updateStateContext = {
-    rootNode: ReconcilerImpl.node,
-    instance: ref(option(instance)),
-    component,
+    id: int,
+    mutable instance: option(instance),
   };
 
-  let _currentStateContext: ref(option(updateStateContext)) = ref(None);
+  let derp: ref(int) = ref(1);
+
+  let noneContext = () => {
+    let id = derp^ + 1;
+    derp := id;
+    let ret: updateStateContext = {
+        id,
+        instance: None
+    };
+    ret;
+  };
+
+  let _currentContext: ref(updateStateContext) = ref(noneContext());
   let _currentState: ref(list(ref(State.t))) = ref([]);
   let _newState: ref(list(ref(State.t))) = ref([]);
   let _bindState =
-      (rootNode, instance, component, stateList: list(ref(State.t))) => {
-    let context: updateStateContext = {rootNode, instance, component};
-
-    _currentStateContext := Some(context);
+      (stateList: list(ref(State.t))) => {
+    _currentContext := noneContext();
     _currentState := stateList;
     _newState := [];
+    _currentContext^;
   };
   let _unbindState = () => {
     let state = _newState^;
@@ -156,7 +166,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
     /* Set up state for the component */
     let previousState = _getCurrentStateFromInstance(previousInstance);
     let stateInstance = ref(previousInstance);
-    _bindState(rootNode, stateInstance, component, previousState);
+    let context = _bindState(previousState);
     let (element, children, effects) = component.render();
     let newState = _unbindState();
 
@@ -196,7 +206,8 @@ module Make = (ReconcilerImpl: Reconciler) => {
       effectInstances,
       state: newState,
     };
-    stateInstance := Some(instance);
+
+    context.instance = Some(instance);
 
     instance;
   };
@@ -275,6 +286,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
             ReconcilerImpl.removeChild(rootNode, b);
             newInstance;
           | (None, None) =>
+            print_endline("6");
             switch (getFirstNode(i), getFirstNode(newInstance)) {
             | (Some(a), Some(b)) => ReconcilerImpl.removeChild(rootNode, a)
             | _ => ()
@@ -328,24 +340,29 @@ module Make = (ReconcilerImpl: Reconciler) => {
     let updatedVal = ref(State.to_state(n));
     _newState := List.append(_newState^, [updatedVal]);
 
-    let currentContext =
-      switch (_currentStateContext^) {
-      | Some(c) => c
-      | _ => raise(TodoException)
-      };
+    let currentContext = _currentContext^;
 
-    let setState = (rootNode, instance, component, newVal: 't) => {
+    print_endline("useState - using id: " ++ string_of_int(currentContext.id));
+
+    let setState = (context: updateStateContext, newVal: 't) => {
       updatedVal := State.to_state(newVal);
-      reconcile(rootNode, instance^, component);
-      ();
+        print_endline ("setState - using id: " ++ string_of_int(context.id));
+      switch(context.instance) {
+      | Some(i) => {
+          let {rootNode, component} = i;
+          reconcile(rootNode, Some(i), component);
+          ();
+        }
+    | _ => {
+        print_endline ("Skipping reconcile!");
+    }
+    };
     };
 
     (
       n,
       setState(
-        currentContext.rootNode,
-        currentContext.instance,
-        currentContext.component,
+        currentContext,
       ),
     );
   };
