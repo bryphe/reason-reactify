@@ -16,15 +16,19 @@ let cComponent = (~children, ()) =>
 
 let noop = () => ();
 
-let componentWithEffectOnMount = (~children, ~functionToCallOnMount, ~functionToCallOnUnmount, ()) => TestReact.component(() => {
-
-    TestReact.useEffect(() => {
+let componentWithEffectOnMount =
+    (~children, ~functionToCallOnMount, ~functionToCallOnUnmount, ()) =>
+  TestReact.component(
+    () => {
+      TestReact.useEffect(() => {
         functionToCallOnMount();
         () => functionToCallOnUnmount();
-    });
+      });
 
-    <bComponent />
-}, ~children);
+      <bComponent />;
+    },
+    ~children,
+  );
 
 test("useEffect is called on render", () => {
   let rootNode = createRootNode();
@@ -33,13 +37,15 @@ test("useEffect is called on render", () => {
   let v = ref(0);
   let mutate = () => v := v^ + 1;
 
-  let expectedStructure: tree(primitives) =
-    TreeNode(
-      Root,
-      [TreeLeaf(B)],
-    );
+  let expectedStructure: tree(primitives) = TreeNode(Root, [TreeLeaf(B)]);
 
-  TestReact.updateContainer(container, <componentWithEffectOnMount functionToCallOnMount={mutate} functionToCallOnUnmount={noop}/>);
+  TestReact.updateContainer(
+    container,
+    <componentWithEffectOnMount
+      functionToCallOnMount=mutate
+      functionToCallOnUnmount=noop
+    />,
+  );
 
   validateStructure(rootNode, expectedStructure);
   assert(v^ == 1);
@@ -51,20 +57,18 @@ test("useEffect handles case when component is removed", () => {
 
   let v = ref(0);
   let r = ref(0);
-  let mount = () => {
-        v := v^ + 1;
-};
- let unmount=       () => { 
-            r := r^ + 1;
-        };
+  let mount = () => v := v^ + 1;
+  let unmount = () => r := r^ + 1;
 
-  let expectedStructure: tree(primitives) =
-    TreeNode(
-      Root,
-      [TreeLeaf(B)],
-    );
+  let expectedStructure: tree(primitives) = TreeNode(Root, [TreeLeaf(B)]);
 
-  TestReact.updateContainer(container, <componentWithEffectOnMount functionToCallOnMount=mount functionToCallOnUnmount=unmount />);
+  TestReact.updateContainer(
+    container,
+    <componentWithEffectOnMount
+      functionToCallOnMount=mount
+      functionToCallOnUnmount=unmount
+    />,
+  );
   validateStructure(rootNode, expectedStructure);
   assert(v^ == 1);
 
