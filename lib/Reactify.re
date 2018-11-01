@@ -27,10 +27,10 @@ module type Reconciler = {
 };
 
 module State = {
-    type t;
+  type t;
 
-    let to_state: 'a => t = (v: 'a) => Obj.magic(v);
-    let of_state: t => 'a = (v: t) => Obj.magic(v);
+  let to_state: 'a => t = (v: 'a) => Obj.magic(v);
+  let of_state: t => 'a = (v: t) => Obj.magic(v);
 };
 
 module Make = (ReconcilerImpl: Reconciler) => {
@@ -70,22 +70,19 @@ module Make = (ReconcilerImpl: Reconciler) => {
   type updateStateContext = {
     rootNode: ReconcilerImpl.node,
     instance: ref(option(instance)),
-    component: component,
+    component,
   };
 
   let _currentStateContext: ref(option(updateStateContext)) = ref(None);
   let _currentState: ref(list(ref(State.t))) = ref([]);
   let _newState: ref(list(ref(State.t))) = ref([]);
-  let _bindState = (rootNode, instance, component, stateList: list(ref(State.t))) => {
-        let context: updateStateContext = {
-        rootNode,
-        instance,
-        component
-        };
+  let _bindState =
+      (rootNode, instance, component, stateList: list(ref(State.t))) => {
+    let context: updateStateContext = {rootNode, instance, component};
 
-        _currentStateContext := Some(context);
-        _currentState := stateList;
-        _newState := [];
+    _currentStateContext := Some(context);
+    _currentState := stateList;
+    _newState := [];
   };
   let _unbindState = () => {
     let state = _newState^;
@@ -136,7 +133,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
     | Some(i) => i.effectInstances
     };
 
-  let _getCurrentStateFromInstance = (instance: option(instance)) => 
+  let _getCurrentStateFromInstance = (instance: option(instance)) =>
     switch (instance) {
     | None => []
     | Some(i) => i.state
@@ -152,7 +149,6 @@ module Make = (ReconcilerImpl: Reconciler) => {
             previousInstance: option(instance),
             component: component,
           ) => {
-
     /* Recycle any previous effect instances */
     let previousEffectInstances = _getEffectsFromInstance(previousInstance);
     List.iter(ei => ei(), previousEffectInstances);
@@ -278,12 +274,12 @@ module Make = (ReconcilerImpl: Reconciler) => {
           | (None, Some(b)) =>
             ReconcilerImpl.removeChild(rootNode, b);
             newInstance;
-          | (None, None) => 
+          | (None, None) =>
             switch (getFirstNode(i), getFirstNode(newInstance)) {
-            | (Some(a), Some(b)) => ReconcilerImpl.removeChild(rootNode, a);
+            | (Some(a), Some(b)) => ReconcilerImpl.removeChild(rootNode, a)
             | _ => ()
-            }
-            newInstance
+            };
+            newInstance;
           };
 
         ret;
@@ -321,34 +317,38 @@ module Make = (ReconcilerImpl: Reconciler) => {
   };
 
   let useState = (v: 't) => {
-
-    let n: 't = switch (_currentState^) {
-    | [] => {
-        v
-    }
-    | [hd, ...tail] => {
+    let n: 't =
+      switch (_currentState^) {
+      | [] => v
+      | [hd, ...tail] =>
         _currentState := tail;
-        State.of_state(hd^)
-    }
-    }
+        State.of_state(hd^);
+      };
 
     let updatedVal = ref(State.to_state(n));
     _newState := List.append(_newState^, [updatedVal]);
 
-    let currentContext = switch(_currentStateContext^) {
-    | Some(c) => c;
-    | _ => raise(TodoException);
-    }
- 
+    let currentContext =
+      switch (_currentStateContext^) {
+      | Some(c) => c
+      | _ => raise(TodoException)
+      };
+
     let setState = (rootNode, instance, component, newVal: 't) => {
-        updatedVal := State.to_state(newVal);
-        reconcile(rootNode, instance^, component);
-        ()
+      updatedVal := State.to_state(newVal);
+      reconcile(rootNode, instance^, component);
+      ();
     };
 
-    (n, setState(currentContext.rootNode, currentContext.instance, currentContext.component));
+    (
+      n,
+      setState(
+        currentContext.rootNode,
+        currentContext.instance,
+        currentContext.component,
+      ),
+    );
   };
-
 
   let updateContainer = (container, component) => {
     let {rootNode, rootInstance} = container;
