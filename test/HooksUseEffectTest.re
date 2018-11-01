@@ -73,8 +73,7 @@ test("useEffect handles case when component is removed", () => {
   assert(v^ == 1);
 
   TestReact.updateContainer(container, <bComponent />);
-  /* TODO: Fix this! */
-  /* validateStructure(rootNode, expectedStructure); */
+  validateStructure(rootNode, expectedStructure);
   assert(v^ == 1);
   assert(r^ == 1);
 });
