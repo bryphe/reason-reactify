@@ -3,6 +3,7 @@
 
 module PrimitiveComponentTest = PrimitiveComponentTest;
 module StatelessComponentTest = StatelessComponentTest;
+module HooksUseEffectTest = HooksUseEffectTest;
 
 /* Use our Reconciler to create our own instance */
 module TestReact = Reactify.Make(TestReconciler);
