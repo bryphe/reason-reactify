@@ -23,8 +23,14 @@ module Event = {
 
   let create = () => ref([]);
 
-  let subscribe = (evt: t('a), f: cb('a)) =>
+  let subscribe = (evt: t('a), f: cb('a)) => {
     evt := List.append(evt^, [f]);
+    let unsubscribe = () => {
+        print_endline ("unsubscribe");
+        evt := List.filter((f) => f !== f, evt^)
+    };
+    unsubscribe;
+  }
 
   let dispatch = (evt: t('a), v: 'a) => List.iter(c => c(v), evt^);
 };
@@ -57,8 +63,8 @@ let componentThatUpdatesState = (~children, ~event: Event.t(int), ()) =>
 
       print_endline("Value: " ++ string_of_int(s));
       TestReact.useEffect(() => {
-        Event.subscribe(event, v => setS(v));
-        noop;
+        let unsubscribe = Event.subscribe(event, v => setS(v));
+        () => unsubscribe();
       });
 
       <aComponent testVal=s />;

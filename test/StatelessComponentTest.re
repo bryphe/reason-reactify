@@ -77,6 +77,42 @@ test("Rendering wrapped component with prop", () => {
   validateStructure(rootNode, expectedStructure);
 });
 
+test("Rendering wrapped component multiple times with prop", () => {
+  let rootNode = createRootNode();
+  let container = TestReact.createContainer(rootNode);
+
+  let expectedStructure: tree(primitives) =
+    TreeNode(
+      Root,
+      [TreeLeaf(A(7))],
+    );
+
+  TestReact.updateContainer(container, <componentWrappingAWithProps v=7 />);
+  validateStructure(rootNode, expectedStructure);
+
+  TestReact.updateContainer(container, <componentWrappingAWithProps v=7 />);
+  validateStructure(rootNode, expectedStructure);
+
+  let expectedStructure: tree(primitives) =
+    TreeNode(
+      Root,
+      [TreeLeaf(A(8))],
+    );
+
+  TestReact.updateContainer(container, <componentWrappingAWithProps v=8 />);
+  validateStructure(rootNode, expectedStructure);
+
+  let expectedStructure: tree(primitives) =
+    TreeNode(
+      Root,
+      [TreeLeaf(A(9))],
+    );
+
+  TestReact.updateContainer(container, <componentWrappingAWithProps v=9 />);
+  validateStructure(rootNode, expectedStructure);
+});
+
+
 test("Replace primitive component to wrapped component", () => {
   let rootNode = createRootNode();
   let container = TestReact.createContainer(rootNode);

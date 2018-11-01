@@ -77,18 +77,14 @@ module Make = (ReconcilerImpl: Reconciler) => {
   let noneContext = () => {
     let id = derp^ + 1;
     derp := id;
-    let ret: updateStateContext = {
-        id,
-        instance: None
-    };
+    let ret: updateStateContext = {id, instance: None};
     ret;
   };
 
   let _currentContext: ref(updateStateContext) = ref(noneContext());
   let _currentState: ref(list(ref(State.t))) = ref([]);
   let _newState: ref(list(ref(State.t))) = ref([]);
-  let _bindState =
-      (stateList: list(ref(State.t))) => {
+  let _bindState = (stateList: list(ref(State.t))) => {
     _currentContext := noneContext();
     _currentState := stateList;
     _newState := [];
@@ -286,7 +282,6 @@ module Make = (ReconcilerImpl: Reconciler) => {
             ReconcilerImpl.removeChild(rootNode, b);
             newInstance;
           | (None, None) =>
-            print_endline("6");
             switch (getFirstNode(i), getFirstNode(newInstance)) {
             | (Some(a), Some(b)) => ReconcilerImpl.removeChild(rootNode, a)
             | _ => ()
@@ -342,29 +337,18 @@ module Make = (ReconcilerImpl: Reconciler) => {
 
     let currentContext = _currentContext^;
 
-    print_endline("useState - using id: " ++ string_of_int(currentContext.id));
-
     let setState = (context: updateStateContext, newVal: 't) => {
       updatedVal := State.to_state(newVal);
-        print_endline ("setState - using id: " ++ string_of_int(context.id));
-      switch(context.instance) {
-      | Some(i) => {
-          let {rootNode, component} = i;
-          reconcile(rootNode, Some(i), component);
-          ();
-        }
-    | _ => {
-        print_endline ("Skipping reconcile!");
-    }
-    };
+      switch (context.instance) {
+      | Some(i) =>
+        let {rootNode, component} = i;
+        reconcile(rootNode, Some(i), component);
+        ();
+      | _ => print_endline("WARNING: Skipping reconcile!")
+      };
     };
 
-    (
-      n,
-      setState(
-        currentContext,
-      ),
-    );
+    (n, setState(currentContext));
   };
 
   let updateContainer = (container, component) => {
