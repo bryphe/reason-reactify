@@ -95,7 +95,9 @@ module Make = (ReconcilerImpl: Reconciler) => {
 
   let useEffect = (e: effect) => _unsafeAddEffect(e);
 
-  let useState = (v: 't) => (v, (_: 't) => ());
+  let useState = (v: 't) => {
+            (v, (_: 't) => ());
+  };
 
   let _getEffectsFromInstance = (instance: option(instance)) =>
     switch (instance) {
