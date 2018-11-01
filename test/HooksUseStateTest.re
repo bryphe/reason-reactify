@@ -59,6 +59,7 @@ let componentThatUpdatesState =
     (~children, ~event: Event.t(int), ()) => TestReact.component(() => {
       let (s, setS) = TestReact.useState(2);
     
+      print_endline ("Value: " ++ string_of_int(s));
       TestReact.useEffect(() => {
         Event.subscribe(event, (v) => setS(v));
         noop;

@@ -26,6 +26,13 @@ module type Reconciler = {
   let updateInstance: (node, primitives) => unit;
 };
 
+module State = {
+    type t;
+
+    let to_state: 'a => t = (v: 'a) => Obj.magic(v);
+    let of_state: t => 'a = (v: t) => Obj.magic(v);
+};
+
 module Make = (ReconcilerImpl: Reconciler) => {
   type element =
     | Primitive(ReconcilerImpl.primitives)
@@ -43,6 +50,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
     rootNode: ReconcilerImpl.node,
     mutable childInstances,
     mutable effectInstances,
+    state: list(ref(State.t)),
   }
   and childInstances = list(instance)
   /* An effectInstance is an effect that was already instantiated - */
@@ -58,6 +66,31 @@ module Make = (ReconcilerImpl: Reconciler) => {
   let _unsafeAddEffect = e =>
     _currentEffects := List.append(_currentEffects^, [e]);
   let _unsafeGetEffects = () => _currentEffects^;
+
+  type updateStateContext = {
+    rootNode: ReconcilerImpl.node,
+    instance: ref(option(instance)),
+    component: component,
+  };
+
+  let _currentStateContext: ref(option(updateStateContext)) = ref(None);
+  let _currentState: ref(list(ref(State.t))) = ref([]);
+  let _newState: ref(list(ref(State.t))) = ref([]);
+  let _bindState = (rootNode, instance, component, stateList: list(ref(State.t))) => {
+        let context: updateStateContext = {
+        rootNode,
+        instance,
+        component
+        };
+
+        _currentStateContext := Some(context);
+        _currentState := stateList;
+        _newState := [];
+  };
+  let _unbindState = () => {
+    let state = _newState^;
+    state;
+  };
 
   type container = {
     rootInstance: ref(option(instance)),
@@ -95,14 +128,18 @@ module Make = (ReconcilerImpl: Reconciler) => {
 
   let useEffect = (e: effect) => _unsafeAddEffect(e);
 
-  let useState = (v: 't) => {
-            (v, (_: 't) => ());
-  };
+  exception TodoException;
 
   let _getEffectsFromInstance = (instance: option(instance)) =>
     switch (instance) {
     | None => []
     | Some(i) => i.effectInstances
+    };
+
+  let _getCurrentStateFromInstance = (instance: option(instance)) => 
+    switch (instance) {
+    | None => []
+    | Some(i) => i.state
     };
 
   /*
@@ -115,9 +152,17 @@ module Make = (ReconcilerImpl: Reconciler) => {
             previousInstance: option(instance),
             component: component,
           ) => {
+
+    /* Recycle any previous effect instances */
     let previousEffectInstances = _getEffectsFromInstance(previousInstance);
     List.iter(ei => ei(), previousEffectInstances);
+
+    /* Set up state for the component */
+    let previousState = _getCurrentStateFromInstance(previousInstance);
+    let stateInstance = ref(previousInstance);
+    _bindState(rootNode, stateInstance, component, previousState);
     let (element, children, effects) = component.render();
+    let newState = _unbindState();
 
     /* TODO: Should this be deferred until we actually mount the component? */
     let effectInstances = List.map(e => e(), effects);
@@ -153,7 +198,9 @@ module Make = (ReconcilerImpl: Reconciler) => {
       children,
       childInstances,
       effectInstances,
+      state: newState,
     };
+    stateInstance := Some(instance);
 
     instance;
   };
@@ -231,7 +278,12 @@ module Make = (ReconcilerImpl: Reconciler) => {
           | (None, Some(b)) =>
             ReconcilerImpl.removeChild(rootNode, b);
             newInstance;
-          | (None, None) => newInstance
+          | (None, None) => 
+            switch (getFirstNode(i), getFirstNode(newInstance)) {
+            | (Some(a), Some(b)) => ReconcilerImpl.removeChild(rootNode, a);
+            | _ => ()
+            }
+            newInstance
           };
 
         ret;
@@ -267,6 +319,36 @@ module Make = (ReconcilerImpl: Reconciler) => {
 
     newChildInstances^;
   };
+
+  let useState = (v: 't) => {
+
+    let n: 't = switch (_currentState^) {
+    | [] => {
+        v
+    }
+    | [hd, ...tail] => {
+        _currentState := tail;
+        State.of_state(hd^)
+    }
+    }
+
+    let updatedVal = ref(State.to_state(n));
+    _newState := List.append(_newState^, [updatedVal]);
+
+    let currentContext = switch(_currentStateContext^) {
+    | Some(c) => c;
+    | _ => raise(TodoException);
+    }
+ 
+    let setState = (rootNode, instance, component, newVal: 't) => {
+        updatedVal := State.to_state(newVal);
+        reconcile(rootNode, instance^, component);
+        ()
+    };
+
+    (n, setState(currentContext.rootNode, currentContext.instance, currentContext.component));
+  };
+
 
   let updateContainer = (container, component) => {
     let {rootNode, rootInstance} = container;
