@@ -33,8 +33,20 @@ module Make = (ReconcilerImpl: Reconciler) => {
   and renderedElement =
     | RenderedPrimitive(ReconcilerImpl.node)
   and elementWithChildren = (element, childComponents, list(effect))
+  /*
+    A component is our JSX primitive element - just an object
+    with a render method.
+    TODO: Can we clean this interface up and just make component
+    a function of type unit => elementWithChildren ?
+  */
   and component = {render: unit => elementWithChildren}
   and childComponents = list(component)
+
+  /*
+     An instance is a component that has been rendered. 
+     We store some additional context for it, like the state,
+     effects that need to be run, and corresponding nodes.
+  */
   and instance = {
     component,
     element,
@@ -46,8 +58,11 @@ module Make = (ReconcilerImpl: Reconciler) => {
     state: list(ref(State.t)),
   }
   and childInstances = list(instance)
-  /* An effectInstance is an effect that was already instantiated - */
-  /* it's an effect we'll have to run when the element is unmounted */
+
+  /*
+    An effectInstance is an effect that was already instantiated -
+    it's an effect we'll have to run when the element is unmounted
+  */
   and effectInstance = unit => unit
   and effectInstances = list(effectInstance)
   /* An effect is a function sent to useEffect. We haven't run it yet, */
