@@ -68,16 +68,11 @@ module Make = (ReconcilerImpl: Reconciler) => {
   let _unsafeGetEffects = () => _currentEffects^;
 
   type updateStateContext = {
-    id: int,
     mutable instance: option(instance),
   };
 
-  let derp: ref(int) = ref(1);
-
   let noneContext = () => {
-    let id = derp^ + 1;
-    derp := id;
-    let ret: updateStateContext = {id, instance: None};
+    let ret: updateStateContext = {instance: None};
     ret;
   };
 
