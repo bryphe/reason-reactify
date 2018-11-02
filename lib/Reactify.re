@@ -26,13 +26,6 @@ module type Reconciler = {
   let updateInstance: (node, primitives) => unit;
 };
 
-module State = {
-  type t;
-
-  let to_state: 'a => t = (v: 'a) => Obj.magic(v);
-  let of_state: t => 'a = (v: t) => Obj.magic(v);
-};
-
 module Make = (ReconcilerImpl: Reconciler) => {
   type element =
     | Primitive(ReconcilerImpl.primitives)
