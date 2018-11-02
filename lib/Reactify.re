@@ -53,7 +53,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
     node: option(ReconcilerImpl.node),
     rootNode: ReconcilerImpl.node,
     mutable childInstances,
-    mutable effectInstances,
+    mutable effectInstances: Effects.effectInstances,
     state: list(ref(State.t)),
   }
   and childInstances = list(instance)
@@ -67,11 +67,12 @@ module Make = (ReconcilerImpl: Reconciler) => {
   /* But we will once the element is mounted */
   and effect = unit => effectInstance;
 
-  let _currentEffects: ref(list(effect)) = ref([]);
-  let _unsafeResetEffects = () => _currentEffects := [];
-  let _unsafeAddEffect = e =>
-    _currentEffects := List.append(_currentEffects^, [e]);
-  let _unsafeGetEffects = () => _currentEffects^;
+
+  /*
+    A global, non-pure container to hold effects
+    during the course of a render operation.
+  */
+  let __globalEffects = Effects.create();
 
   type updateStateContext = {mutable instance: option(instance)};
 
@@ -109,9 +110,9 @@ module Make = (ReconcilerImpl: Reconciler) => {
   let component = (~children=[], c: componentFunction) => {
     let ret: component = {
       render: () => {
-        _unsafeResetEffects();
+        Effects.resetEffects(__globalEffects);
         let children: list(component) = [c()];
-        let effects = _unsafeGetEffects();
+        let effects = Effects.getEffects(__globalEffects);
         let renderResult: elementWithChildren = (
           Component,
           children,
@@ -128,7 +129,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
     comp;
   };
 
-  let useEffect = (e: effect) => _unsafeAddEffect(e);
+  let useEffect = (e: effect) => Effects.addEffect(__globalEffects, e);
 
   exception TodoException;
 
@@ -156,7 +157,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
           ) => {
     /* Recycle any previous effect instances */
     let previousEffectInstances = _getEffectsFromInstance(previousInstance);
-    List.iter(ei => ei(), previousEffectInstances);
+    Effects.runEffectInstances(previousEffectInstances);
 
     /* Set up state for the component */
     let previousState = _getCurrentStateFromInstance(previousInstance);
@@ -166,7 +167,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
     let newState = _unbindState();
 
     /* TODO: Should this be deferred until we actually mount the component? */
-    let effectInstances = List.map(e => e(), effects);
+    let effectInstances = Effects.runEffects(effects);
 
     let primitiveInstance =
       switch (element) {
