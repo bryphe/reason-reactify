@@ -244,7 +244,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
                   switch (newInstance.element) {
                   | Primitive(o) =>
                     ReconcilerImpl.updateInstance(b, o);
-                    i.childInstances = reconcileChildren(i, newInstance);
+                    i.childInstances = reconcileChildren(b, i.childInstances, newInstance.children);
                     i;
                   | _ =>
                     print_endline(
@@ -258,7 +258,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
                 };
               } else {
                 /* The node itself is unchanged, so we'll just reconcile the children */
-                i.childInstances = reconcileChildren(i, newInstance);
+                i.childInstances = reconcileChildren(b, i.childInstances, newInstance.children);
                 i;
               };
             | _ =>
@@ -292,10 +292,9 @@ module Make = (ReconcilerImpl: Reconciler) => {
       };
     r;
   }
-  and reconcileChildren = (currentInstance: instance, newInstance: instance) => {
-    let root = currentInstance.rootNode;
-    let currentChildInstances = Array.of_list(currentInstance.childInstances);
-    let newChildren = Array.of_list(newInstance.children);
+  and reconcileChildren = (root: node, currentChildInstances: list(instance), newChildren: list(component)) => {
+    let currentChildInstances = Array.of_list(currentChildInstances);
+    let newChildren = Array.of_list(newChildren);
 
     let newChildInstances = ref([]);
 
@@ -309,14 +308,14 @@ module Make = (ReconcilerImpl: Reconciler) => {
         List.append(newChildInstances^, [newChildInstance]);
     };
 
-    List.iter(
-      nci =>
-        switch (nci.node) {
-        | Some(n) => ReconcilerImpl.appendChild(newInstance.rootNode, n)
-        | None => ()
-        },
-      newChildInstances^,
-    );
+/*     List.iter( */
+/*       nci => */
+/*         switch (nci.node) { */
+/*         | Some(n) => ReconcilerImpl.appendChild(newInstance.rootNode, n) */
+/*         | None => () */
+/*         }, */
+/*       newChildInstances^, */
+/*     ); */
 
     /* Clean up existing children */
     for (i in
