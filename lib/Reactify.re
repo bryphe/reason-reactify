@@ -237,7 +237,6 @@ module Make = (ReconcilerImpl: Reconciler) => {
             /* Only both replacing node if the primitives are different */
             switch (newInstance.element, i.element) {
             | (Primitive(oldPrim), Primitive(newPrim)) =>
-              print_endline("Primitive-on-primitive");
               if (oldPrim != newPrim) {
                 /* Check if the primitive type is the same - if it is, we can simply update the node */
                 /* If not, we'll replace the node */
@@ -254,13 +253,11 @@ module Make = (ReconcilerImpl: Reconciler) => {
                     newInstance;
                   };
                 } else {
-                  print_endline("Primitive-on-primitive: 1");
                   ReconcilerImpl.replaceChild(rootNode, a, b);
                   newInstance;
                 };
               } else {
                 /* The node itself is unchanged, so we'll just reconcile the children */
-                print_endline("Primitive-on-primitive: 1");
                 i.childInstances = reconcileChildren(i, newInstance);
                 i;
               };
@@ -273,7 +270,6 @@ module Make = (ReconcilerImpl: Reconciler) => {
           | (Some(a), None) =>
             /* If there was a non-primitive instance, we need to get the top-level node - */
             /* and then remove it */
-            print_endline("1!");
             let currentNode = getFirstNode(i);
             switch (currentNode) {
             | Some(c) => ReconcilerImpl.removeChild(rootNode, c)
@@ -282,11 +278,9 @@ module Make = (ReconcilerImpl: Reconciler) => {
             ReconcilerImpl.appendChild(rootNode, a);
             newInstance;
           | (None, Some(b)) =>
-            print_endline("2!");
             ReconcilerImpl.removeChild(rootNode, b);
             newInstance;
           | (None, None) =>
-            print_endline("3!");
             switch (getFirstNode(i), getFirstNode(newInstance)) {
             | (Some(a), Some(b)) => ReconcilerImpl.removeChild(rootNode, a)
             | _ => ()
@@ -325,7 +319,6 @@ module Make = (ReconcilerImpl: Reconciler) => {
     );
 
     /* Clean up existing children */
-    print_endline("reconcileChildren::cleanup start");
     for (i in
          Array.length(newChildren) to
          Array.length(currentChildInstances) - 1) {
@@ -334,7 +327,6 @@ module Make = (ReconcilerImpl: Reconciler) => {
       | _ => ()
       };
     };
-    print_endline("reconcileChildren::cleanup end");
 
     newChildInstances^;
   };
