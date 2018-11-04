@@ -175,39 +175,41 @@ module Make = (ReconcilerImpl: Reconciler) => {
       | None => rootNode
       };
 
+    let childInstances = reconcileChildren(rootNode, children, []);
+
     /* Create a candidate new instance. We haven't reconciled the children, yet */
-    let newInstance: instance = {
+    let instance: instance = {
       component,
       element,
       node: primitiveInstance,
       rootNode: nextRootPrimitiveInstance,
       children,
-      childInstances: [],
+      childInstances,
       effectInstances,
       state: newState,
     };
 
-    let createChildInstances = () => {
-      let ret =
-        List.map(instantiate(nextRootPrimitiveInstance, None), children);
+    /* let createChildInstances = () => { */
+    /*   let ret = */
+    /*     List.map(instantiate(nextRootPrimitiveInstance, None), children); */
 
-      let appendIfInstance = ci =>
-        switch (ci.node) {
-        | Some(s) => ReconcilerImpl.appendChild(nextRootPrimitiveInstance, s)
-        | _ => ()
-        };
+    /*   let appendIfInstance = ci => */
+    /*     switch (ci.node) { */
+    /*     | Some(s) => ReconcilerImpl.appendChild(nextRootPrimitiveInstance, s) */
+    /*     | _ => () */
+    /*     }; */
 
-      List.iter(appendIfInstance, ret);
-      ret;
-    };
+    /*   List.iter(appendIfInstance, ret); */
+    /*   ret; */
+    /* }; */
 
-    let childInstances =
-      switch (previousInstance) {
-      | None => createChildInstances()
-      | Some(p) => createChildInstances()
-      };
+    /* let childInstances = */
+    /*   switch (previousInstance) { */
+    /*   | None => createChildInstances() */
+    /*   | Some(p) => createChildInstances() */
+    /*   }; */
 
-    let instance: instance = {...newInstance, childInstances};
+    /* let instance: instance = {...newInstance, childInstances}; */
 
     /*
          'context' is the instance that state needs when 'setState' is called
@@ -296,7 +298,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
     let currentChildInstances = Array.of_list(currentChildInstances);
     let newChildren = Array.of_list(newChildren);
 
-    let newChildInstances = ref([]);
+    let newChildInstances: list(instance) = ref([]);
 
     for (i in 0 to Array.length(newChildren) - 1) {
       let childInstance =
