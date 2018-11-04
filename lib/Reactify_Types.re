@@ -71,6 +71,8 @@ module type React = {
   /*
        Component API
    */
+  let empty: component;
+
   let useEffect: effect => unit;
 
   type stateUpdateFunction('t) = 't => unit;

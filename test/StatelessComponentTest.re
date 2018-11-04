@@ -177,3 +177,35 @@ test("Rendering component that renders component child", () => {
 
   validateStructure(rootNode, expectedStructure);
 });
+
+let componentWithVisibilityToggle = (~children, ~visible=true, ()) => TestReact.component(() => {
+    switch (visible) {
+    | true => {
+            <aComponent testVal=1>
+                ...children
+            </aComponent>
+    }
+    | false => TestReact.empty
+    };
+});
+
+test("Test toggling visibility", () => {
+  let rootNode = createRootNode();
+  let container = TestReact.createContainer(rootNode);
+
+  let expectedStructure: tree(primitives) =
+    TreeNode(
+      Root,
+      [TreeNode(A(1), [TreeLeaf(B)])]
+    );
+
+  TestReact.updateContainer(container, <componentWithVisibilityToggle visible=true><componentWrappingB /></componentWithVisibilityToggle>);
+  validateStructure(rootNode, expectedStructure);
+
+  TestReact.updateContainer(container, <componentWithVisibilityToggle visible=false><componentWrappingB /></componentWithVisibilityToggle>);
+  let expectedStructure: tree(primitives) =
+    TreeLeaf(
+      Root
+    );
+  validateStructure(rootNode, expectedStructure);
+});

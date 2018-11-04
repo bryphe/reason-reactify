@@ -79,6 +79,12 @@ module Make = (ReconcilerImpl: Reconciler) => {
 
   type componentFunction = unit => component;
 
+  let empty: component = {
+    render: () => {
+        (Component, [], [])
+    },
+  };
+
   let component = (~children: childComponents=[], c: componentFunction) => {
     let ret: component = {
       render: () => {
