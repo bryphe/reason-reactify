@@ -113,36 +113,36 @@ let componentThatUpdatesStateAndRendersChildren = (~children, ~event: Event.t(in
   );
 
 /* TODO: Fix nested state! */
-/* test("nested state works as expected", () => { */
+test("nested state works as expected", () => {
 
-/*   let rootNode = createRootNode(); */
-/*   let container = TestReact.createContainer(rootNode); */
+  let rootNode = createRootNode();
+  let container = TestReact.createContainer(rootNode);
 
-/*   let outerEvent = Event.create(); */
-/*   let innerEvent = Event.create(); */
+  let outerEvent = Event.create();
+  let innerEvent = Event.create();
 
-/*   TestReact.updateContainer(container, */
-/*         <componentThatUpdatesStateAndRendersChildren event=outerEvent> */
-/*             <componentThatUpdatesState event=innerEvent/> */
-/*         </componentThatUpdatesStateAndRendersChildren>); */
+  TestReact.updateContainer(container,
+        <componentThatUpdatesStateAndRendersChildren event=outerEvent>
+            <componentThatUpdatesState event=innerEvent/>
+        </componentThatUpdatesStateAndRendersChildren>);
 
-/*   let expectedStructure: tree(primitives) = */
-/*     TreeNode(Root, [TreeNode(A(2), [TreeLeaf(A(2))])]); */
-/*   validateStructure(rootNode, expectedStructure); */
+  let expectedStructure: tree(primitives) =
+    TreeNode(Root, [TreeNode(A(2), [TreeLeaf(A(2))])]);
+  validateStructure(rootNode, expectedStructure);
 
-/*   Event.dispatch(outerEvent, 5); */
-/*   let expectedStructure: tree(primitives) = */
-/*     TreeNode(Root, [TreeNode(A(5), [TreeLeaf(A(2))])]); */
-/*   validateStructure(rootNode, expectedStructure); */
+  Event.dispatch(outerEvent, 5);
+  let expectedStructure: tree(primitives) =
+    TreeNode(Root, [TreeNode(A(5), [TreeLeaf(A(2))])]);
+  validateStructure(rootNode, expectedStructure);
 
-/*   Event.dispatch(innerEvent, 6); */
-/*   let expectedStructure: tree(primitives) = */
-/*     TreeNode(Root, [TreeNode(A(5), [TreeLeaf(A(6))])]); */
-/*   validateStructure(rootNode, expectedStructure); */
+  Event.dispatch(innerEvent, 6);
+  let expectedStructure: tree(primitives) =
+    TreeNode(Root, [TreeNode(A(5), [TreeLeaf(A(6))])]);
+  validateStructure(rootNode, expectedStructure);
 
-/*   Event.dispatch(outerEvent, 7); */
-/*   let expectedStructure: tree(primitives) = */
-/*     TreeNode(Root, [TreeNode(A(7), [TreeLeaf(A(6))])]); */
-/*   validateStructure(rootNode, expectedStructure); */
+  Event.dispatch(outerEvent, 7);
+  let expectedStructure: tree(primitives) =
+    TreeNode(Root, [TreeNode(A(7), [TreeLeaf(A(6))])]);
+  validateStructure(rootNode, expectedStructure);
 
-/* }); */
+});

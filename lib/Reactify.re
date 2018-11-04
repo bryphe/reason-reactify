@@ -111,6 +111,12 @@ module Make = (ReconcilerImpl: Reconciler) => {
     | Some(i) => i.effectInstances
     };
 
+  let _getPreviousChildInstances = (instance: option(instance)) =>
+    switch (instance) {
+    | None => []
+    | Some(i) => i.childInstances
+    };
+
   let _getCurrentStateFromInstance = (instance: option(instance)) =>
     switch (instance) {
     | None => []
@@ -175,41 +181,19 @@ module Make = (ReconcilerImpl: Reconciler) => {
       | None => rootNode
       };
 
-    /* let childInstances = reconcileChildren(rootNode, [], children); */
+    let previousChildInstances = _getPreviousChildInstances(previousInstance);
+    let childInstances = reconcileChildren(nextRootPrimitiveInstance, previousChildInstances, children);
 
-    /* Create a candidate new instance. We haven't reconciled the children, yet */
-    let newInstance: instance = {
+    let instance: instance = {
       component,
       element,
       node: primitiveInstance,
       rootNode: nextRootPrimitiveInstance,
       children,
-      childInstances: [],
+      childInstances: childInstances,
       effectInstances,
       state: newState,
     };
-
-    let createChildInstances = () => {
-      let ret =
-        List.map(instantiate(nextRootPrimitiveInstance, None), children);
-
-      let appendIfInstance = ci =>
-        switch (ci.node) {
-        | Some(s) => ReconcilerImpl.appendChild(nextRootPrimitiveInstance, s)
-        | _ => ()
-        };
-
-      List.iter(appendIfInstance, ret);
-      ret;
-    };
-
-    let childInstances =
-      switch (previousInstance) {
-      | None => createChildInstances()
-      | Some(p) => createChildInstances()
-      };
-
-    let instance: instance = {...newInstance, childInstances};
 
     /*
          'context' is the instance that state needs when 'setState' is called
@@ -283,10 +267,6 @@ module Make = (ReconcilerImpl: Reconciler) => {
             ReconcilerImpl.removeChild(rootNode, b);
             newInstance;
           | (None, None) =>
-            switch (getFirstNode(i), getFirstNode(newInstance)) {
-            | (Some(a), Some(b)) => ReconcilerImpl.removeChild(rootNode, a)
-            | _ => ()
-            };
             newInstance;
           };
 

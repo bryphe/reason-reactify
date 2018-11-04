@@ -103,7 +103,9 @@ let removeChild = (parent, child) => {
 
 let updateInstance = (node, prim) => {
     switch (prim) {
-    | A(x) => node.nodeType = A(x)
+    | A(x) => 
+        print_endline ("Updating A to: " ++ string_of_int(x));
+        node.nodeType = A(x)
     | _ => print_endline ("Unhandled primitive in updateInstance");
     };
     ();
