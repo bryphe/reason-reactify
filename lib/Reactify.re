@@ -290,15 +290,6 @@ module Make = (ReconcilerImpl: Reconciler) => {
         List.append(newChildInstances^, [newChildInstance]);
     };
 
-    /* List.iter( */
-    /*   nci => */
-    /*     switch (nci.node) { */
-    /*     | Some(n) => ReconcilerImpl.appendChild(newInstance.rootNode, n) */
-    /*     | None => () */
-    /*     }, */
-    /*   newChildInstances^, */
-    /* ); */
-
     /* Clean up existing children */
     for (i in
          Array.length(newChildren) to
