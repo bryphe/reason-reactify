@@ -175,41 +175,41 @@ module Make = (ReconcilerImpl: Reconciler) => {
       | None => rootNode
       };
 
-    let childInstances = reconcileChildren(rootNode, children, []);
+    /* let childInstances = reconcileChildren(rootNode, [], children); */
 
     /* Create a candidate new instance. We haven't reconciled the children, yet */
-    let instance: instance = {
+    let newInstance: instance = {
       component,
       element,
       node: primitiveInstance,
       rootNode: nextRootPrimitiveInstance,
       children,
-      childInstances,
+      childInstances: [],
       effectInstances,
       state: newState,
     };
 
-    /* let createChildInstances = () => { */
-    /*   let ret = */
-    /*     List.map(instantiate(nextRootPrimitiveInstance, None), children); */
+    let createChildInstances = () => {
+      let ret =
+        List.map(instantiate(nextRootPrimitiveInstance, None), children);
 
-    /*   let appendIfInstance = ci => */
-    /*     switch (ci.node) { */
-    /*     | Some(s) => ReconcilerImpl.appendChild(nextRootPrimitiveInstance, s) */
-    /*     | _ => () */
-    /*     }; */
+      let appendIfInstance = ci =>
+        switch (ci.node) {
+        | Some(s) => ReconcilerImpl.appendChild(nextRootPrimitiveInstance, s)
+        | _ => ()
+        };
 
-    /*   List.iter(appendIfInstance, ret); */
-    /*   ret; */
-    /* }; */
+      List.iter(appendIfInstance, ret);
+      ret;
+    };
 
-    /* let childInstances = */
-    /*   switch (previousInstance) { */
-    /*   | None => createChildInstances() */
-    /*   | Some(p) => createChildInstances() */
-    /*   }; */
+    let childInstances =
+      switch (previousInstance) {
+      | None => createChildInstances()
+      | Some(p) => createChildInstances()
+      };
 
-    /* let instance: instance = {...newInstance, childInstances}; */
+    let instance: instance = {...newInstance, childInstances};
 
     /*
          'context' is the instance that state needs when 'setState' is called
@@ -294,11 +294,11 @@ module Make = (ReconcilerImpl: Reconciler) => {
       };
     r;
   }
-  and reconcileChildren = (root: node, currentChildInstances: list(instance), newChildren: list(component)) => {
-    let currentChildInstances = Array.of_list(currentChildInstances);
+  and reconcileChildren = (root: node, currentChildInstances: childInstances, newChildren: list(component)) => {
+    let currentChildInstances: array(instance) = Array.of_list(currentChildInstances);
     let newChildren = Array.of_list(newChildren);
 
-    let newChildInstances: list(instance) = ref([]);
+    let newChildInstances: ref(childInstances) = ref([]);
 
     for (i in 0 to Array.length(newChildren) - 1) {
       let childInstance =
@@ -310,14 +310,14 @@ module Make = (ReconcilerImpl: Reconciler) => {
         List.append(newChildInstances^, [newChildInstance]);
     };
 
-/*     List.iter( */
-/*       nci => */
-/*         switch (nci.node) { */
-/*         | Some(n) => ReconcilerImpl.appendChild(newInstance.rootNode, n) */
-/*         | None => () */
-/*         }, */
-/*       newChildInstances^, */
-/*     ); */
+    /* List.iter( */
+    /*   nci => */
+    /*     switch (nci.node) { */
+    /*     | Some(n) => ReconcilerImpl.appendChild(newInstance.rootNode, n) */
+    /*     | None => () */
+    /*     }, */
+    /*   newChildInstances^, */
+    /* ); */
 
     /* Clean up existing children */
     for (i in
@@ -366,3 +366,4 @@ module Make = (ReconcilerImpl: Reconciler) => {
 
 module State = State;
 module Event = Event;
+module Utility = Utility;

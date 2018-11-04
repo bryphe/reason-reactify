@@ -1,6 +1,8 @@
 
 open TestUtility;
 
+module Utility = Reactify.Utility;
+
 type testRecord = {
     testVal: int
 };
@@ -26,8 +28,8 @@ test("Same constructors should be equal", () => {
     assert(Utility.areConstructorsEqual(a11,a12) == true);
 });
 
-test("Constructors with different parameters should not be equal", () => {
-    assert(Utility.areConstructorsEqual(a11,a2) == false);
+test("Constructors with different parameters should still have equal constructors", () => {
+    assert(Utility.areConstructorsEqual(a11,a2) == true);
 });
 
 test("Different constructors should not be equal", () => {
@@ -38,6 +40,6 @@ test("Constructors with same record types should be equal", () => {
     assert(Utility.areConstructorsEqual(d11, d12) == true);
 });
 
-test("Constructors with different record types should not be equal", () => {
-    assert(Utility.areConstructorsEqual(d11, d2) == false);
+test("Constructors with same variant but different parameters should be equal", () => {
+    assert(Utility.areConstructorsEqual(d11, d2) == true);
 });

@@ -9,3 +9,4 @@ module Make:
 
 module State = State;
 module Event = Event;
+module Utility = Utility;

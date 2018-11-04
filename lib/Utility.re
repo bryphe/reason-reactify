@@ -1,5 +1,11 @@
 /* Support methods for the library */
 
+/*
+    areConstructorsEqual
+
+    This is a helper method to check if two objects came from the same constructor.
+*/
+
 let areConstructorsEqual = (x: 'a, y: 'a) => {
   let r = Obj.repr(x)
   and s = Obj.repr(y);
