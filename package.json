@@ -12,7 +12,8 @@
     "@opam/lwt": "*",
     "@esy-ocaml/reason": "*",
     "ocaml": "~4.6.0",
-    "refmterr": "*"
+    "refmterr": "*",
+    "@opam/lambda-term": "^1.11.0"
   },
   "resolutions": {
     "@esy-ocaml/esy-installer": "0.0.1",
@@ -20,7 +21,6 @@
     "@opam/re": "1.8.0"
   },
   "devDependencies": {
-    "@esy-ocaml/merlin": "*",
-    "@opam/lambda-term": "^1.11.0"
+    "@esy-ocaml/merlin": "*"
   }
 }
