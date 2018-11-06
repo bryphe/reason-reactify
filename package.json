@@ -20,6 +20,7 @@
     "@opam/re": "1.8.0"
   },
   "devDependencies": {
-    "@esy-ocaml/merlin": "*"
+    "@esy-ocaml/merlin": "*",
+    "@opam/lambda-term": "^1.11.0"
   }
 }
