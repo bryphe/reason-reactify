@@ -106,6 +106,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
       element: Component,
       render: () => {
         Effects.resetEffects(__globalEffects);
+        let _dummy = children;
         let children: list(component) = [c()];
         let effects = Effects.getEffects(__globalEffects);
         let renderResult: elementWithChildren = (
@@ -168,8 +169,6 @@ module Make = (ReconcilerImpl: Reconciler) => {
 
   let useEffect = (e: effect) => Effects.addEffect(__globalEffects, e);
 
-  exception TodoException;
-
   let _getEffectsFromInstance = (instance: option(instance)) =>
     switch (instance) {
     | None => []
@@ -216,7 +215,6 @@ module Make = (ReconcilerImpl: Reconciler) => {
 
     /* Set up state for the component */
     let previousState = _getCurrentStateFromInstance(previousInstance);
-    let stateInstance = ref(previousInstance);
     let state = ComponentState.create(previousState);
     /* We hold onto a reference to the component instance - we need to set this _after_ the component is instantiated */
     let stateContext = ComponentState.getCurrentContext(state);
@@ -410,7 +408,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
       updateFunction(newVal);
       switch (context^) {
       | Some(i) =>
-        let {rootNode, component} = i;
+        let {rootNode, component, _} = i;
         let _ = reconcile(rootNode, Some(i), component, i.context);
         ();
       | _ => print_endline("WARNING: Skipping reconcile!")
