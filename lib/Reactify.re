@@ -299,7 +299,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
                 /* Check if the primitive type is the same - if it is, we can simply update the node */
                 /* If not, we'll replace the node */
                 if (Utility.areConstructorsEqual(oldPrim, newPrim)) {
-                    ReconcilerImpl.updateInstance(i, oldPrim, newPrim);
+                    ReconcilerImpl.updateInstance(b, oldPrim, newPrim);
                     i.childInstances =
                       reconcileChildren(
                         b,
@@ -308,7 +308,6 @@ module Make = (ReconcilerImpl: Reconciler) => {
                         context,
                       );
                     i;
-                  };
                 } else {
                   ReconcilerImpl.replaceChild(rootNode, a, b);
                   newInstance;
