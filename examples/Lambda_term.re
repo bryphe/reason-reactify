@@ -67,7 +67,7 @@ module Reconciler = {
     | Container(z) => (z :> widget)
     };
 
-  let updateInstance = (node: node, _oldPrimitive, newPrimitive: primitives) =>
+  let updateInstance = (node: node, _oldPrimitive: primitives, newPrimitive: primitives) =>
     switch (newPrimitive, node) {
     | (Label(txt), Label(n)) => n#set_text(txt)
     | (Button(buttonProps), Button(n)) =>
