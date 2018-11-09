@@ -1,6 +1,6 @@
 {
   "name": "reason-reactify",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Reason workflow with Esy",
   "license": "MIT",
   "esy": {
@@ -12,7 +12,8 @@
     "@opam/lwt": "*",
     "@esy-ocaml/reason": "*",
     "ocaml": "~4.6.0",
-    "refmterr": "*"
+    "refmterr": "*",
+    "@opam/lambda-term": "^1.11.0"
   },
   "resolutions": {
     "@esy-ocaml/esy-installer": "0.0.1",

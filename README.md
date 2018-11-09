@@ -1,4 +1,5 @@
 [![Build Status](https://bryphe.visualstudio.com/reason-reactify/_apis/build/status/bryphe.reason-reactify)](https://bryphe.visualstudio.com/reason-reactify/_build/latest?definitionId=3)
+[![npm version](https://badge.fury.io/js/reason-reactify.svg)](https://badge.fury.io/js/reason-reactify)
 
 # :rocket: Reactify
 
@@ -121,7 +122,7 @@ module WebReconciler {
 
     type t =
     | Div
-    | Span
+    | Span(string)
     | Image(imageProps);
 
     type node = Dom_html.element;
@@ -131,10 +132,12 @@ module WebReconciler {
     let createInstance: t => node = (primitive) => {
         switch(primitive) {
         | Div => Html.createDiv(document);
-        | Span => Html.createSpan(document);
+        | Span(t) => 
+            let span = Html.createSpan(document);
+            span##textContent = t;
         | Image(p) => 
            let img = Html.createImage(document);
-           img.src = p.src;
+           img##src = p.src;
            img;
         };
     };
@@ -167,27 +170,74 @@ Phew! That was a lot. Note that `createInstance` and `updateInstance` are operat
 
 `reactify` provides a [functor](https://reasonml.github.io/docs/en/module#module-functions-functors) for building a React API from your reconciler:
 
+```diff
++ module MyReact = Reactify.Make(WebReconciler);
 ```
-module MyReact = Reactify.Make(WebReconciler);
+
+We'll also want to define some _primitive components_:
+
+```diff
++ let div = (~children, ()) => primitiveComponent(Div, ~children);
++ let span = (~children, ~text, ()) => primitiveComponent(Span(text), ~children);
++ let image = (~children, ~src, ()) => primitiveComponent(Image(src), ~children);
 ```
 
-We'll also want to define some primitive components:
-
-
+These primitives are the building blocks that we can start composing to build interesting things.
 
 Cool!
 
 ### Step 6: Use your API!
 
+We have everything we need to start building things. Every Reactify'd API needs a container - this stores the current reconciliation state and allows us to do delta updates. We can create one like so:
+
 #### Create / update a container
+
+```diff
++ let container = MyReact.createContainer(Html.window##.document##body())
++ MyReact.updateContainer(container, <span text="Hello World" />):
+```
 
 #### Create custom components
 
+## API
+
+- Custom Components
+    - Hooks
+        - useState
+        - useEffect
+    - Context
+
+### Examples
+
+- [Lambda_term](examples/Lambda_term_reconciler.re)
+
+### Usages
+
+- [Revery](https://github.com/bryphe/revery)
+
 ## Development
 
-### Building the project
+### Install [esy](https://esy.sh/)
 
-### Running tests
+`esy` is like `npm` for native code. If you don't have it already, install it by running:
+```
+npm install -g esy
+```
+
+### Building
+
+- `esy install`
+- `esy build`
+
+### Running Examples
+
+- `esy b dune build @examples`
+
+> You can then run `Lambda_term.exe` in `_build/default/examples`
+
+### Running Tests
+
+- `esy b dune runtest test`
 
 ## Limitations
 
