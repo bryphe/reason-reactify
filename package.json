@@ -1,6 +1,6 @@
 {
   "name": "reason-reactify",
-  "version": "0.1.1",
+  "version": "1.0.0",
   "description": "Reason workflow with Esy",
   "license": "MIT",
   "esy": {
