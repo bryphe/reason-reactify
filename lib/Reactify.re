@@ -294,14 +294,12 @@ module Make = (ReconcilerImpl: Reconciler) => {
           | (Some(a), Some(b)) =>
             /* Only both replacing node if the primitives are different */
             switch (newInstance.component.element, i.component.element) {
-            | (Primitive(oldPrim), Primitive(newPrim)) =>
+            | (Primitive(newPrim), Primitive(oldPrim)) =>
               if (oldPrim != newPrim) {
                 /* Check if the primitive type is the same - if it is, we can simply update the node */
                 /* If not, we'll replace the node */
                 if (Utility.areConstructorsEqual(oldPrim, newPrim)) {
-                  switch (newInstance.component.element) {
-                  | Primitive(o) =>
-                    ReconcilerImpl.updateInstance(b, o);
+                    ReconcilerImpl.updateInstance(i, oldPrim, newPrim);
                     i.childInstances =
                       reconcileChildren(
                         b,
@@ -310,11 +308,6 @@ module Make = (ReconcilerImpl: Reconciler) => {
                         context,
                       );
                     i;
-                  | _ =>
-                    print_endline(
-                      "ERROR: We shouldn't hit this condition! If there is a node, there should be a related primitive element.",
-                    );
-                    newInstance;
                   };
                 } else {
                   ReconcilerImpl.replaceChild(rootNode, a, b);

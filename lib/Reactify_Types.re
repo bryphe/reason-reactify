@@ -23,7 +23,7 @@ module type Reconciler = {
 
   let removeChild: (node, node) => unit;
 
-  let updateInstance: (node, primitives) => unit;
+  let updateInstance: (node, primitives, primitives) => unit;
 };
 
 module type React = {
