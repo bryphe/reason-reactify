@@ -8,3 +8,4 @@ steps:
   - script: esy install
   - script: esy build
   - script: esy b dune runtest test
+  - script: esy b dune build @examples
