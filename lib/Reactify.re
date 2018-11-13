@@ -29,7 +29,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
       effects that need to be run, and corresponding nodes.
    */
   and instance = {
-    component,
+    mutable component,
     children: childComponents,
     node: option(ReconcilerImpl.node),
     rootNode: ReconcilerImpl.node,
@@ -300,6 +300,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
                 /* If not, we'll replace the node */
                 if (Utility.areConstructorsEqual(oldPrim, newPrim)) {
                     ReconcilerImpl.updateInstance(b, oldPrim, newPrim);
+                    i.component = newInstance.component;
                     i.childInstances =
                       reconcileChildren(
                         b,

@@ -85,7 +85,6 @@ test("ReplaceChildNodeTest", () => {
    print_endline ("going for the update....");
    TestReact.updateContainer(container, <aComponent testVal={1}><bComponent /></aComponent>);
 
-
     TestReconciler.show(rootNode);
     let expectedStructure = TreeNode(Root, [TreeNode(A(1), [TreeLeaf(B)])]);
    validateStructure(rootNode, expectedStructure);
@@ -128,7 +127,6 @@ test("ReplaceNodeTest", () => {
    validateStructure(rootNode, expectedStructure);
 });
 
-
 test("RenderingChildrenTest", () => {
   let rootNode = createRootNode();
   let container = TestReact.createContainer(rootNode);
@@ -141,5 +139,17 @@ test("RenderingChildrenTest", () => {
 
   TestReact.updateContainer(container, component());
 
+  validateStructure(rootNode, expectedStructure);
+});
+
+test("Regression Test - update, revert does not re-render node", () => {
+  let rootNode = createRootNode();
+  let container = TestReact.createContainer(rootNode);
+
+  TestReact.updateContainer(container, <aComponent testVal={0} />);
+  TestReact.updateContainer(container, <aComponent testVal={1} />);
+  TestReact.updateContainer(container, <aComponent testVal={0} />);
+
+  let expectedStructure = TreeNode(Root, [TreeLeaf(A(0))]);
   validateStructure(rootNode, expectedStructure);
 });
