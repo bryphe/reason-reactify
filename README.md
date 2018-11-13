@@ -208,8 +208,7 @@ We have everything we need to start building things. Every Reactify'd API needs 
     - Context
 
 ### Examples
-
-- [Lambda_term](examples/Lambda_term_reconciler.re)
+- [Lambda_term](examples/Lambda_term.re)
 
 ### Usages
 
