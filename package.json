@@ -14,13 +14,12 @@
     "ocaml": "~4.6.0",
     "refmterr": "*",
     "@opam/lambda-term": "^1.11.0",
-    "rejest": "*"
+    "rejest": "^1.1.0"
   },
   "resolutions": {
     "@esy-ocaml/esy-installer": "0.0.1",
     "@opam/menhir": "20171013",
-    "@opam/re": "1.8.0",
-    "rejest": "github:bryphe/rejest#db2b8fd"
+    "@opam/re": "1.8.0"
   },
   "devDependencies": {
     "@esy-ocaml/merlin": "*"
