@@ -2,6 +2,7 @@
     (name Test)
     (libraries
         reactify
+        rejest
             ))
 
 (alias
