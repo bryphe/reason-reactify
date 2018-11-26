@@ -3,7 +3,9 @@ open Reactify_Types;
 module Make = (ReconcilerImpl: Reconciler) => {
   type element =
     | Primitive(ReconcilerImpl.primitives)
-    | Component
+    | Component(componentFunction)
+    | Provider
+    | Empty
   and renderedElement =
     | RenderedPrimitive(ReconcilerImpl.node)
   and elementWithChildren = (
@@ -22,6 +24,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
     element,
     render: unit => elementWithChildren,
   }
+  and componentFunction = unit => component
   and childComponents = list(component)
   /*
       An instance is a component that has been rendered.
@@ -123,23 +126,22 @@ module Make = (ReconcilerImpl: Reconciler) => {
 
   };
 
-  type componentFunction = unit => component;
 
   let empty: component = {
-    element: Component,
-    render: () => (Component, [], [], __globalContext^),
+    element: Empty,
+    render: () => (Empty, [], [], __globalContext^),
   };
 
   let component = (~children: childComponents=[], c: componentFunction) => {
     let ret: component = {
-      element: Component,
+      element: Component(c),
       render: () => {
         Effects.resetEffects(__globalEffects);
         let _dummy = children;
         let children: list(component) = [c()];
         let effects = Effects.getEffects(__globalEffects);
         let renderResult: elementWithChildren = (
-          Component,
+          Component(c),
           children,
           effects,
           __globalContext^,
@@ -177,12 +179,12 @@ module Make = (ReconcilerImpl: Reconciler) => {
   let getProvider = ctx => {
     let provider = (~children, ~value, ()) => {
       let ret: component = {
-        element: Component,
+        element: Provider,
         render: () => {
           let contextId = ctx.id;
           let context = Context.clone(__globalContext^);
           Context.set(context, contextId, Object.to_object(value));
-          (Component, children, [], context);
+          (Provider, children, [], context);
         },
       };
       ret;
@@ -227,6 +229,19 @@ module Make = (ReconcilerImpl: Reconciler) => {
       }
     };
 
+  let isInstanceOfComponent = (instance: option(instance), component:component) => {
+    switch(instance) {
+    | None => false
+    | Some(x) => {
+        switch((x.component.element, component.element)) {
+        | (Primitive(a), Primitive(b)) =>  Utility.areConstructorsEqual(a, b)
+        | (Component(a), Component(b)) => a === b
+        | _ => x.component.element == component.element
+        }   
+    };
+    } 
+  }
+
   /*
    * Instantiate turns a component function into a live instance,
    * and asks the reconciler to append it to the root node.
@@ -239,13 +254,19 @@ module Make = (ReconcilerImpl: Reconciler) => {
             context: Context.t,
             container: t,
           ) => {
+
+    let previousState = ref([]);
+        
     /* Recycle any previous effect instances */
     let previousEffectInstances = _getEffectsFromInstance(previousInstance);
     Effects.runEffectInstances(previousEffectInstances);
 
-    /* Set up state for the component */
-    let previousState = _getCurrentStateFromInstance(previousInstance);
-    let state = ComponentState.create(previousState);
+    if (isInstanceOfComponent(previousInstance, component)) {
+        /* Set up state for the component */
+        previousState := _getCurrentStateFromInstance(previousInstance);
+    }
+
+    let state = ComponentState.create(previousState^);
     /* We hold onto a reference to the component instance - we need to set this _after_ the component is instantiated */
     let stateContext = ComponentState.getCurrentContext(state);
 
