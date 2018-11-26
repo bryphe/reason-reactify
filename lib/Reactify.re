@@ -260,6 +260,15 @@ module Make = (ReconcilerImpl: Reconciler) => {
     __globalState := noState;
     let newState = ComponentState.getNewState(state);
 
+    let oldEffectCount = List.length(previousEffectInstances);
+    let newEffectCount = List.length(effects);
+    /* Assume that, if there were no previous effects, this must be a first-time render */
+    /* In that case, we'll create an empty set of effects to match the new effects */
+    let previousEffectInstances = switch(oldEffectCount == 0 && newEffectCount > 0) {
+    | true => Effects.createEmptyEffectInstances(newEffectCount)
+    | false => previousEffectInstances
+    };
+
     /* TODO: Should this be deferred until we actually mount the component? */
     let effectInstances = Effects.runEffects(previousEffectInstances, effects);
 
