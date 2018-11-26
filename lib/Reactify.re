@@ -328,6 +328,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
 
         newInstance;
       | Some(i) =>
+        i.effectInstances = newInstance.effectInstances;
         let ret =
           switch (newInstance.node, i.node) {
           | (Some(a), Some(b)) =>

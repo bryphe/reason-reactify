@@ -63,13 +63,19 @@ let rec createEmptyEffectInstances = (x: int) => {
 let runEffects: (effectInstances, effects) => effectInstances = (previousInstances, effects) => {
 
     let fn = (acc: effectInstances, previousEffectInstance: effectInstance, currentEffect: effect) => {
-        previousEffectInstance.fn(); 
-        let effectInstanceFn = currentEffect.effectFn();
-        let effectInstance: effectInstance = {
-            condition: currentEffect.effectCondition,
-            fn: effectInstanceFn,
+        let newInstance = switch (previousEffectInstance.condition == currentEffect.effectCondition && previousEffectInstance.condition !== None) {
+        | true => previousEffectInstance
+        | false =>
+            previousEffectInstance.fn(); 
+            let effectInstanceFn = currentEffect.effectFn();
+            let ret: effectInstance = {
+                condition: currentEffect.effectCondition,
+                fn: effectInstanceFn,
+            };
+            ret;
         };
-        [effectInstance, ...acc]
+
+        [newInstance, ...acc]
     };
 
     let initial: effectInstances = [];
