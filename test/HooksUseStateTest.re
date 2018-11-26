@@ -26,6 +26,7 @@ let componentWithState = (~children, ()) =>
     },
     ~children,
   );
+
 type renderOption =
   /* | Nothing */
   | ComponentWithState
@@ -73,6 +74,30 @@ test("useState", () => {
 
     let expectedStructure: tree(primitives) =
       TreeNode(Root, [TreeLeaf(A(5))]);
+    validateStructure(rootNode, expectedStructure);
+  });
+
+  test("useState doesn't leak state between components", () => {
+    let rootNode = createRootNode();
+
+    let container = TestReact.createContainer(rootNode);
+
+    let event: Event.t(int) = Event.create();
+
+    TestReact.updateContainer(container, <componentThatUpdatesState event />);
+
+    Event.dispatch(event, 5);
+
+    let expectedStructure: tree(primitives) =
+      TreeNode(Root, [TreeLeaf(A(5))]);
+    validateStructure(rootNode, expectedStructure);
+
+    TestReact.updateContainer(container, <componentWithState />);
+
+    /* The 'componentWithState' should have its own state, so it should revert back to 2 - */
+    /* and not pick up the state from the previous component */
+    let expectedStructure: tree(primitives) =
+      TreeNode(Root, [TreeLeaf(A(2))]);
     validateStructure(rootNode, expectedStructure);
   });
 
