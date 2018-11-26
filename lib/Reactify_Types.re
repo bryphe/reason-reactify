@@ -35,7 +35,7 @@ module type React = {
     | Component
   and renderedElement =
     | RenderedPrimitive(node)
-  and elementWithChildren = (element, childComponents, list(effect), Context.t)
+  and elementWithChildren = (element, childComponents, Effects.effects, Context.t)
   /*
      A component is our JSX primitive element - just an object
      with a render method.
@@ -46,12 +46,7 @@ module type React = {
       element,
       render: unit => elementWithChildren
   }
-  and childComponents = list(component)
-  and effectInstance = unit => unit
-  and effectInstances = list(effectInstance)
-  /* An effect is a function sent to useEffect. We haven't run it yet, */
-  /* But we will once the element is mounted */
-  and effect = unit => effectInstance;
+  and childComponents = list(component);
 
   type componentFunction = unit => component;
 
@@ -85,7 +80,7 @@ module type React = {
 
   let empty: component;
 
-  let useEffect: (~condition:'a=?, effect) => unit;
+  let useEffect: (~condition:'a=?, Effects.effectFunction) => unit;
 
   type stateUpdateFunction('t) = 't => unit;
   type stateResult('t) = ('t, stateUpdateFunction('t));

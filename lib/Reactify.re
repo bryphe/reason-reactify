@@ -9,7 +9,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
   and elementWithChildren = (
     element,
     childComponents,
-    list(effect),
+    Effects.effects,
     Context.t,
   )
   /*
@@ -47,16 +47,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
     containerNode: ReconcilerImpl.node,
   }
   and t = container
-  and childInstances = list(instance)
-  /*
-     An effectInstance is an effect that was already instantiated -
-     it's an effect we'll have to run when the element is unmounted
-   */
-  and effectInstance = unit => unit
-  and effectInstances = list(effectInstance)
-  /* An effect is a function sent to useEffect. We haven't run it yet, */
-  /* But we will once the element is mounted */
-  and effect = unit => effectInstance;
+  and childInstances = list(instance);
 
   type stateUpdateFunction('t) = 't => unit;
   type stateResult('t) = ('t, stateUpdateFunction('t));
@@ -196,12 +187,13 @@ module Make = (ReconcilerImpl: Reconciler) => {
     | None => ctx.initialValue
     };
 
-  let useEffect = (~condition: option('a)=?, e: effect) => {
+  let useEffect = (~condition: option('a)=?, e: Effects.effectFunction) => {
         switch (condition) {
         | Some(_) => print_endline ("Some condition");
         | None => print_endline ("No condition");
         };
         Effects.addEffect(__globalEffects, e);
+        ();
   };
 
   let _getEffectsFromInstance = (instance: option(instance)) =>
@@ -247,7 +239,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
           ) => {
     /* Recycle any previous effect instances */
     let previousEffectInstances = _getEffectsFromInstance(previousInstance);
-    Effects.runEffectInstances(previousEffectInstances);
+    /* Effects.runEffectInstances(previousEffectInstances); */
 
     /* Set up state for the component */
     let previousState = _getCurrentStateFromInstance(previousInstance);
@@ -269,7 +261,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
     let newState = ComponentState.getNewState(state);
 
     /* TODO: Should this be deferred until we actually mount the component? */
-    let effectInstances = Effects.runEffects(effects);
+    let effectInstances = Effects.runEffects(previousEffectInstances, effects);
 
     let primitiveInstance =
       switch (element) {
