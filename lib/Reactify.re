@@ -196,7 +196,13 @@ module Make = (ReconcilerImpl: Reconciler) => {
     | None => ctx.initialValue
     };
 
-  let useEffect = (e: effect) => Effects.addEffect(__globalEffects, e);
+  let useEffect = (~condition: option('a)=?, e: effect) => {
+        switch (condition) {
+        | Some(_) => print_endline ("Some condition");
+        | None => print_endline ("No condition");
+        };
+        Effects.addEffect(__globalEffects, e);
+  };
 
   let _getEffectsFromInstance = (instance: option(instance)) =>
     switch (instance) {

@@ -85,7 +85,7 @@ module type React = {
 
   let empty: component;
 
-  let useEffect: effect => unit;
+  let useEffect: (~condition:'a=?, effect) => unit;
 
   type stateUpdateFunction('t) = 't => unit;
   type stateResult('t) = ('t, stateUpdateFunction('t));
