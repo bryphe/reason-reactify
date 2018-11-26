@@ -21,14 +21,14 @@ type updateType =
 
 let updates: ref(list(updateType)) = ref([]);
 
-let printUpdate = u =>
-  switch (u) {
-  | Append => print_endline("- append")
-  | Create => print_endline("- create")
-  | Remove => print_endline("- remove")
-  | Update => print_endline("- update")
-  | Replace => print_endline("- replace")
-  };
+let printUpdate = _u => ();
+  /* switch (u) { */
+  /* | Append => print_endline("- append") */
+  /* | Create => print_endline("- create") */
+  /* | Remove => print_endline("- remove") */
+  /* | Update => print_endline("- update") */
+  /* | Replace => print_endline("- replace") */
+  /* }; */
 
 let _currentId = ref(1);
 
@@ -87,15 +87,15 @@ let appendChild = (parent, child) => {
 };
 
 let removeChild = (parent, child) => {
-  let prevCount = List.length(parent.children^);
+  /* let prevCount = List.length(parent.children^); */
   parent.children := List.filter(c => c != child, parent.children^);
-  let newCount = List.length(parent.children^);
-  print_endline(
-    "remove child - previous count: "
-    ++ string_of_int(prevCount)
-    ++ " new count: "
-    ++ string_of_int(newCount),
-  );
+  /* let newCount = List.length(parent.children^); */
+  /* print_endline( */
+  /*   "remove child - previous count: " */
+  /*   ++ string_of_int(prevCount) */
+  /*   ++ " new count: " */
+  /*   ++ string_of_int(newCount), */
+  /* ); */
   pushUpdate(Remove);
 };
 

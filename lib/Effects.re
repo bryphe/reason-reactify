@@ -60,7 +60,12 @@ let rec createEmptyEffectInstances = (x: int) => {
     };
 };
 
-let runEffects: (effectInstances, effects) => effectInstances = (previousInstances, effects) => {
+let runEffects: (~previousInstances:effectInstances=?, effects) => effectInstances = (~previousInstances:option(effectInstances)=?, effects) => {
+
+    let previousInstances = switch (previousInstances) {
+    | None => createEmptyEffectInstances(List.length(effects))
+    | Some(x) => x
+    };
 
     let fn = (acc: effectInstances, previousEffectInstance: effectInstance, currentEffect: effect) => {
         let newInstance = switch (previousEffectInstance.condition == currentEffect.effectCondition && previousEffectInstance.condition !== None) {
@@ -82,6 +87,11 @@ let runEffects: (effectInstances, effects) => effectInstances = (previousInstanc
 
     List.fold_left2(fn, initial, previousInstances, effects);
     /* List.rev(l); */
+};
+
+let drainEffects: (effectInstances) => unit = (effects: effectInstances) => {
+    let fn = (ei) => ei.fn();
+    List.iter(fn, effects);
 };
 
 /* let runEffectInstances: (effectInstances) => unit = (effectInstances) => { */

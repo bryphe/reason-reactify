@@ -91,7 +91,9 @@ test("useEffect", () => {
     validateStructure(rootNode, expectedStructure);
     assert(v^ == 1);
 
+    print_endline("** START REMOVING")
     TestReact.updateContainer(container, <bComponent />);
+    print_endline("** END REMOVING")
     validateStructure(rootNode, expectedStructure);
     assert(v^ == 1);
     assert(r^ == 1);

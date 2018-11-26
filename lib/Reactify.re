@@ -35,6 +35,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
     rootNode: ReconcilerImpl.node,
     mutable childInstances,
     mutable effectInstances: Effects.effectInstances,
+    effects: Effects.effects,
     state: State.HeterogenousMutableList.t,
     context: Context.HeterogenousHashtbl.t,
     container: t,
@@ -238,7 +239,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
             container: t,
           ) => {
     /* Recycle any previous effect instances */
-    let previousEffectInstances = _getEffectsFromInstance(previousInstance);
+    let _previousEffectInstances = _getEffectsFromInstance(previousInstance);
     /* Effects.runEffectInstances(previousEffectInstances); */
 
     /* Set up state for the component */
@@ -260,17 +261,24 @@ module Make = (ReconcilerImpl: Reconciler) => {
     __globalState := noState;
     let newState = ComponentState.getNewState(state);
 
-    let oldEffectCount = List.length(previousEffectInstances);
-    let newEffectCount = List.length(effects);
-    /* Assume that, if there were no previous effects, this must be a first-time render */
-    /* In that case, we'll create an empty set of effects to match the new effects */
-    let previousEffectInstances = switch(oldEffectCount == 0 && newEffectCount > 0) {
-    | true => Effects.createEmptyEffectInstances(newEffectCount)
-    | false => previousEffectInstances
-    };
+    /* let oldEffectCount = List.length(previousEffectInstances); */
+    /* let newEffectCount = List.length(effects); */
 
-    /* TODO: Should this be deferred until we actually mount the component? */
-    let effectInstances = Effects.runEffects(previousEffectInstances, effects);
+    /* if (oldEffectCount != newEffectCount) { */
+    /*     print_endline (" -- previous effect count: " ++ string_of_int(oldEffectCount)); */
+    /*     print_endline (" -- new effect count: " ++ string_of_int(newEffectCount)); */
+    /* } */
+    /* /1* Assume that, if there were no previous effects, this must be a first-time render *1/ */
+    /* /1* In that case, we'll create an empty set of effects to match the new effects *1/ */
+    /* let previousEffectInstances = switch(oldEffectCount != newEffectCount) { */
+    /* | true => Effects.createEmptyEffectInstances(newEffectCount) */
+    /* | false => previousEffectInstances */
+    /* }; */
+
+    let effectInstances =  [];
+
+    /* /1* TODO: Should this be deferred until we actually mount the component? *1/ */
+    /* let effectInstances = Effects.runEffects(~previousInstances=previousEffectInstances, effects); */
 
     let primitiveInstance =
       switch (element) {
@@ -300,6 +308,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
       rootNode: nextRootPrimitiveInstance,
       children,
       childInstances,
+      effects,
       effectInstances,
       state: newState,
       context: newContext,
@@ -328,7 +337,6 @@ module Make = (ReconcilerImpl: Reconciler) => {
 
         newInstance;
       | Some(i) =>
-        i.effectInstances = newInstance.effectInstances;
         let ret =
           switch (newInstance.node, i.node) {
           | (Some(a), Some(b)) =>
@@ -341,6 +349,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
                 if (Utility.areConstructorsEqual(oldPrim, newPrim)) {
                   ReconcilerImpl.updateInstance(b, oldPrim, newPrim);
                   i.component = newInstance.component;
+                  i.effectInstances = newInstance.effectInstances;
                   i.childInstances =
                     reconcileChildren(
                       b,
@@ -356,6 +365,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
                 };
               } else {
                 /* The node itself is unchanged, so we'll just reconcile the children */
+                i.effectInstances = newInstance.effectInstances;
                 i.childInstances =
                   reconcileChildren(
                     b,
