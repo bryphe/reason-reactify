@@ -29,6 +29,7 @@ let componentWithEffectOnMount =
 
       <bComponent />;
     },
+    ~uniqueId="componentWithEffectOnMount",
     ~children,
   );
 
@@ -36,13 +37,14 @@ let componentWithEmptyConditionalEffect =
     (~children, ~functionToCallOnMount, ~functionToCallOnUnmount, ()) =>
   TestReact.component(
     () => {
-      TestReact.useEffect(~condition=[], () => {
+      TestReact.useEffect(~condition=MountUnmount, () => {
         functionToCallOnMount();
         () => functionToCallOnUnmount();
       });
 
       <bComponent />;
     },
+    ~uniqueId="componentWithEmptyConditionalEffect",
     ~children,
   );
 
@@ -91,9 +93,7 @@ test("useEffect", () => {
     validateStructure(rootNode, expectedStructure);
     assert(v^ == 1);
 
-    print_endline("** START REMOVING")
     TestReact.updateContainer(container, <bComponent />);
-    print_endline("** END REMOVING")
     validateStructure(rootNode, expectedStructure);
     assert(v^ == 1);
     assert(r^ == 1);
@@ -138,6 +138,7 @@ test("useEffect", () => {
         functionToCallOnUnmount=noop
       />,
     );
+    print_endline ("** SECOND UPDATE **");
     TestReact.updateContainer(
       container,
       <componentWithEmptyConditionalEffect
@@ -145,7 +146,8 @@ test("useEffect", () => {
         functionToCallOnUnmount=noop
       />,
     );
+    print_endline ("** SECOND UPDATE **");
 
-    assert(v^ == 1);
+    expect(v^).toBe(1);
   });
 });

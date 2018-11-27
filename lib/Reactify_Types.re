@@ -32,7 +32,7 @@ module type React = {
 
   type element =
     | Primitive(primitives)
-    | Component(componentFunction)
+    | Component(string)
     | Provider
     | Empty
   and renderedElement =
@@ -66,7 +66,7 @@ module type React = {
   let primitiveComponent:
     (~children: childComponents, primitives) => component;
   let component:
-    (~children: childComponents=?, componentFunction) => component;
+    (~children: childComponents=?, ~uniqueId:string=?, componentFunction) => component;
 
   /*
        Component API
@@ -81,7 +81,7 @@ module type React = {
 
   let empty: component;
 
-  let useEffect: (~condition:'a=?, Effects.effectFunction) => unit;
+  let useEffect: (~condition:Effects.effectCondition=?, Effects.effectFunction) => unit;
 
   type stateUpdateFunction('t) = 't => unit;
   type stateResult('t) = ('t, stateUpdateFunction('t));

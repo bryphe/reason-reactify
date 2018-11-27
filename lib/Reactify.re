@@ -3,7 +3,7 @@ open Reactify_Types;
 module Make = (ReconcilerImpl: Reconciler) => {
   type element =
     | Primitive(ReconcilerImpl.primitives)
-    | Component(componentFunction)
+    | Component(string)
     | Provider
     | Empty
   and renderedElement =
@@ -117,22 +117,21 @@ module Make = (ReconcilerImpl: Reconciler) => {
 
   };
 
-
   let empty: component = {
     element: Empty,
     render: () => (Empty, [], [], __globalContext^),
   };
 
-  let component = (~children: childComponents=[], c: componentFunction) => {
+  let component = (~children: childComponents=[], ~uniqueId:string="", c: componentFunction) => {
     let ret: component = {
-      element: Component(c),
+      element: Component(uniqueId),
       render: () => {
         Effects.resetEffects(__globalEffects);
         let _dummy = children;
         let children: list(component) = [c()];
         let effects = Effects.getEffects(__globalEffects);
         let renderResult: elementWithChildren = (
-          Component(c),
+          Component(uniqueId),
           children,
           effects,
           __globalContext^,
@@ -189,12 +188,8 @@ module Make = (ReconcilerImpl: Reconciler) => {
     | None => ctx.initialValue
     };
 
-  let useEffect = (~condition: option('a)=?, e: Effects.effectFunction) => {
-        switch (condition) {
-        | Some(_) => print_endline ("Some condition");
-        | None => print_endline ("No condition");
-        };
-        Effects.addEffect(__globalEffects, e);
+  let useEffect = (~condition:Effects.effectCondition=Effects.Always, e: Effects.effectFunction) => {
+        Effects.addEffect(~condition=condition, __globalEffects, e);
         ();
   };
 
@@ -283,12 +278,15 @@ module Make = (ReconcilerImpl: Reconciler) => {
     __globalState := noState;
     let newState = ComponentState.getNewState(state);
 
-    /* let oldEffectCount = List.length(previousEffectInstances); */
     let newEffectCount = List.length(effects);
 
     let newEffectInstances = switch (isSameInstanceAsBefore) {
-    | true => Effects.runEffects(~previousInstances=previousEffectInstances, effects);    
+    | true => {
+        print_endline ("same instance");
+        Effects.runEffects(~previousInstances=previousEffectInstances, effects);    
+    }
     | false => {
+        print_endline ("different instance");
         Effects.drainEffects(previousEffectInstances);
         let emptyInstances = Effects.createEmptyEffectInstances(newEffectCount);
         Effects.runEffects(~previousInstances=emptyInstances, effects);

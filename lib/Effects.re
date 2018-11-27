@@ -4,7 +4,9 @@
   Module encapsulating some simple effect manipulation
 */
 
-type effectCondition = option(Object.t)
+type effectCondition = 
+| Always 
+| MountUnmount
 and effectInstanceFunction = unit => unit
 and effectFunction = unit => effectInstanceFunction
 and effectInstance = {
@@ -35,15 +37,10 @@ let resetEffects: t => unit = (effects: t) => {
     effects := [];
 };
 
-let addEffect = (~condition:'a=?, effects: ref(effects), effectFunction: effectFunction) => {
-    let boxedCondition = switch(condition) {
-    | None => None
-    | Some(x) => Some(Object.to_object(x))
-    };
-
+let addEffect = (~condition:effectCondition, effects: ref(effects), effectFunction: effectFunction) => {
     let effect: effect = {
       effectFn: effectFunction,
-      effectCondition: boxedCondition,
+      effectCondition: condition,
     };
 
     effects := List.append(effects^, [effect]);
@@ -55,7 +52,7 @@ let getEffects: (t) => list(effect) = (effects) => {
 
 let rec createEmptyEffectInstances = (x: int) => {
     switch (x > 0) {
-    | true => [{ fn: noop, condition: None}, ...createEmptyEffectInstances(x - 1)]
+    | true => [{ fn: noop, condition: Always}, ...createEmptyEffectInstances(x - 1)]
     | false => []
     };
 };
@@ -68,8 +65,13 @@ let runEffects: (~previousInstances:effectInstances=?, effects) => effectInstanc
     };
 
     let fn = (acc: effectInstances, previousEffectInstance: effectInstance, currentEffect: effect) => {
-        let newInstance = switch (previousEffectInstance.condition == currentEffect.effectCondition && previousEffectInstance.condition !== None) {
-        | true => previousEffectInstance
+        let pc = previousEffectInstance.condition;
+        let nc = currentEffect.effectCondition;
+        let newInstance = switch (pc === nc && pc === MountUnmount) {
+        | true => {
+            print_endline ("RETURNING PREVIOUS EFFECT");
+            previousEffectInstance
+        }
         | false =>
             previousEffectInstance.fn(); 
             let effectInstanceFn = currentEffect.effectFn();
@@ -85,8 +87,8 @@ let runEffects: (~previousInstances:effectInstances=?, effects) => effectInstanc
 
     let initial: effectInstances = [];
 
-    List.fold_left2(fn, initial, previousInstances, effects);
-    /* List.rev(l); */
+    let l = List.fold_left2(fn, initial, previousInstances, effects);
+    List.rev(l);
 };
 
 let drainEffects: (effectInstances) => unit = (effects: effectInstances) => {
