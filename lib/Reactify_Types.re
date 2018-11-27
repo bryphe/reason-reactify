@@ -32,7 +32,9 @@ module type React = {
 
   type element =
     | Primitive(primitives)
-    | Component
+    | Component(componentFunction)
+    | Provider
+    | Empty
   and renderedElement =
     | RenderedPrimitive(node)
   and elementWithChildren = (element, childComponents, Effects.effects, Context.t)
@@ -46,9 +48,8 @@ module type React = {
       element,
       render: unit => elementWithChildren
   }
+  and componentFunction = unit => component
   and childComponents = list(component);
-
-  type componentFunction = unit => component;
 
   type t;
 

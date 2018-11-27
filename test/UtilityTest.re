@@ -45,4 +45,17 @@ test("Utility", () => {
     () =>
     assert(Utility.areConstructorsEqual(d11, d2) == true)
   );
+
+  test("Function equality", () => {
+    let a = () => ();
+    /* let b = () => (); */
+
+    let fn = (f) => f;
+
+    let a0 = fn(a);
+    let a1 = fn(a);
+
+
+    expect(a0 === a1).toBe(true);
+  });
 });
