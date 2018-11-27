@@ -68,6 +68,13 @@ module type React = {
   let component:
     (~children: childComponents=?, ~uniqueId:string=?, componentFunction) => component;
 
+  module type COMPONENT = {
+    type t;
+    let createElement: t;
+  };
+
+  let component2: ('a) => (module COMPONENT with type t = 'a);
+
   /*
        Component API
    */

@@ -142,6 +142,18 @@ module Make = (ReconcilerImpl: Reconciler) => {
     ret;
   };
 
+  module type COMPONENT = {
+    type t;
+    let createElement: t;
+  };
+
+  let component2 = (type a, fn): (module COMPONENT with type t = a) => {
+    (module {
+        type t = a;
+        let createElement = fn;
+    }) 
+  };
+
   let primitiveComponent = (~children, prim) => {
     let comp: component = {
       element: Primitive(prim),
