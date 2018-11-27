@@ -144,11 +144,12 @@ module Make = (ReconcilerImpl: Reconciler) => {
 
   module type COMPONENT = {
     type t;
+    /* let derp: unit => unit; */
     let createElement: t;
   };
 
   let component2 = (type a, fn): (module COMPONENT with type t = a) => {
-    (module {
+    (module {        
         type t = a;
         let createElement = fn;
     }) 

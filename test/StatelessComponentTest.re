@@ -19,6 +19,10 @@ let cComponent = (~children, ()) =>
 let componentWrappingB = (~children, ()) =>
   TestReact.component(() => <bComponent />, ~children);
 
+module ComponentWrappingB = (val TestReact.component2((~children, ()) => {
+    TestReact.component(() => <bComponent />, ~children);
+}));
+
 test("StatelessComponentTest", () => {
   test("Rendering simple wrapped component", () => {
     let rootNode = createRootNode();
@@ -27,7 +31,7 @@ test("StatelessComponentTest", () => {
     let expectedStructure: tree(primitives) =
       TreeNode(Root, [TreeLeaf(B)]);
 
-    TestReact.updateContainer(container, <componentWrappingB />);
+    TestReact.updateContainer(container, <ComponentWrappingB />);
 
     validateStructure(rootNode, expectedStructure);
   });
