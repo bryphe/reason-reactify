@@ -66,7 +66,7 @@ module type React = {
   let primitiveComponent:
     (~children: childComponents, primitives) => component;
   let component:
-    (~children: childComponents=?, ~uniqueId:string=?, componentFunction) => component;
+    (~children: childComponents=?, ~uniqueId:string, componentFunction) => component;
 
   /*
        Component API

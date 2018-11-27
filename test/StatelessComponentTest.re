@@ -17,7 +17,9 @@ let cComponent = (~children, ()) =>
   TestReact.primitiveComponent(C, ~children);
 
 let componentWrappingB = (~children, ()) =>
-  TestReact.component(() => <bComponent />, ~children);
+  TestReact.component(() => <bComponent />, 
+  ~uniqueId="componentWrappingB",
+  ~children);
 
 test("StatelessComponentTest", () => {
   test("Rendering simple wrapped component", () => {
@@ -33,7 +35,7 @@ test("StatelessComponentTest", () => {
   });
 
   let componentWrappingAWithProps = (~children, ~v, ()) =>
-    TestReact.component(() => <aComponent testVal=v />, ~children);
+    TestReact.component(() => <aComponent testVal=v />, ~uniqueId="componentWrappingAWithProps", ~children);
 
   test("Rendering wrapped component with prop", () => {
     let rootNode = createRootNode();
@@ -104,6 +106,7 @@ test("StatelessComponentTest", () => {
   let componentWithWrappedComponents = (~children, ()) =>
     TestReact.component(
       () => <aComponent testVal=1> <componentWrappingB /> </aComponent>,
+      ~uniqueId="componentWithWrappedComponents",
       ~children,
     );
 
@@ -120,7 +123,7 @@ test("StatelessComponentTest", () => {
   });
 
   let componentThatRendersChildren = (~children, ()) =>
-    TestReact.component(
+    TestReact.component(~uniqueId="componentThatRendersChildren",
       () => <aComponent testVal=1> ...children </aComponent>,
       ~children,
     );
@@ -160,7 +163,7 @@ test("StatelessComponentTest", () => {
   });
 
   let componentWithVisibilityToggle = (~children, ~visible=true, ()) =>
-    TestReact.component(() =>
+    TestReact.component(~uniqueId="componentWithVisibilityToggle", () =>
       visible ?
         <aComponent testVal=1> ...children </aComponent> : TestReact.empty
     );

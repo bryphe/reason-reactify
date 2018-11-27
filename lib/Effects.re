@@ -58,7 +58,6 @@ let rec createEmptyEffectInstances = (x: int) => {
 };
 
 let runEffects: (~previousInstances:effectInstances=?, effects) => effectInstances = (~previousInstances:option(effectInstances)=?, effects) => {
-
     let previousInstances = switch (previousInstances) {
     | None => createEmptyEffectInstances(List.length(effects))
     | Some(x) => x
@@ -68,10 +67,7 @@ let runEffects: (~previousInstances:effectInstances=?, effects) => effectInstanc
         let pc = previousEffectInstance.condition;
         let nc = currentEffect.effectCondition;
         let newInstance = switch (pc === nc && pc === MountUnmount) {
-        | true => {
-            print_endline ("RETURNING PREVIOUS EFFECT");
-            previousEffectInstance
-        }
+        | true => previousEffectInstance
         | false =>
             previousEffectInstance.fn(); 
             let effectInstanceFn = currentEffect.effectFn();
@@ -95,7 +91,3 @@ let drainEffects: (effectInstances) => unit = (effects: effectInstances) => {
     let fn = (ei) => ei.fn();
     List.iter(fn, effects);
 };
-
-/* let runEffectInstances: (effectInstances) => unit = (effectInstances) => { */
-/*     List.iter(ei => ei(), effectInstances); */
-/* }; */

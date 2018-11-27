@@ -122,7 +122,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
     render: () => (Empty, [], [], __globalContext^),
   };
 
-  let component = (~children: childComponents=[], ~uniqueId:string="", c: componentFunction) => {
+  let component = (~children: childComponents=[], ~uniqueId:string, c: componentFunction) => {
     let ret: component = {
       element: Component(uniqueId),
       render: () => {
@@ -282,11 +282,9 @@ module Make = (ReconcilerImpl: Reconciler) => {
 
     let newEffectInstances = switch (isSameInstanceAsBefore) {
     | true => {
-        print_endline ("same instance");
         Effects.runEffects(~previousInstances=previousEffectInstances, effects);    
     }
     | false => {
-        print_endline ("different instance");
         Effects.drainEffects(previousEffectInstances);
         let emptyInstances = Effects.createEmptyEffectInstances(newEffectCount);
         Effects.runEffects(~previousInstances=emptyInstances, effects);
