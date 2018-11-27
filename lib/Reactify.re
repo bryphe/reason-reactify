@@ -38,7 +38,6 @@ module Make = (ReconcilerImpl: Reconciler) => {
     rootNode: ReconcilerImpl.node,
     mutable childInstances,
     mutable effectInstances: Effects.effectInstances,
-    effects: Effects.effects,
     state: State.HeterogenousMutableList.t,
     context: Context.HeterogenousHashtbl.t,
     container: t,
@@ -257,10 +256,12 @@ module Make = (ReconcilerImpl: Reconciler) => {
     let previousState = ref([]);
         
     /* Recycle any previous effect instances */
-    let _previousEffectInstances = _getEffectsFromInstance(previousInstance);
+    let previousEffectInstances = _getEffectsFromInstance(previousInstance);
     /* Effects.runEffectInstances(previousEffectInstances); */
 
-    if (isInstanceOfComponent(previousInstance, component)) {
+    let isSameInstanceAsBefore = isInstanceOfComponent(previousInstance, component)
+
+    if (isSameInstanceAsBefore) {
         /* Set up state for the component */
         previousState := _getCurrentStateFromInstance(previousInstance);
     }
@@ -283,23 +284,16 @@ module Make = (ReconcilerImpl: Reconciler) => {
     let newState = ComponentState.getNewState(state);
 
     /* let oldEffectCount = List.length(previousEffectInstances); */
-    /* let newEffectCount = List.length(effects); */
+    let newEffectCount = List.length(effects);
 
-    /* if (oldEffectCount != newEffectCount) { */
-    /*     print_endline (" -- previous effect count: " ++ string_of_int(oldEffectCount)); */
-    /*     print_endline (" -- new effect count: " ++ string_of_int(newEffectCount)); */
-    /* } */
-    /* /1* Assume that, if there were no previous effects, this must be a first-time render *1/ */
-    /* /1* In that case, we'll create an empty set of effects to match the new effects *1/ */
-    /* let previousEffectInstances = switch(oldEffectCount != newEffectCount) { */
-    /* | true => Effects.createEmptyEffectInstances(newEffectCount) */
-    /* | false => previousEffectInstances */
-    /* }; */
-
-    let effectInstances =  [];
-
-    /* /1* TODO: Should this be deferred until we actually mount the component? *1/ */
-    /* let effectInstances = Effects.runEffects(~previousInstances=previousEffectInstances, effects); */
+    let newEffectInstances = switch (isSameInstanceAsBefore) {
+    | true => Effects.runEffects(~previousInstances=previousEffectInstances, effects);    
+    | false => {
+        Effects.drainEffects(previousEffectInstances);
+        let emptyInstances = Effects.createEmptyEffectInstances(newEffectCount);
+        Effects.runEffects(~previousInstances=emptyInstances, effects);
+        }
+    }
 
     let primitiveInstance =
       switch (element) {
@@ -329,8 +323,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
       rootNode: nextRootPrimitiveInstance,
       children,
       childInstances,
-      effects,
-      effectInstances,
+      effectInstances: newEffectInstances,
       state: newState,
       context: newContext,
       container: container,
