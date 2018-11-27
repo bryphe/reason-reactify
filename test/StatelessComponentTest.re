@@ -19,7 +19,8 @@ let cComponent = (~children, ()) =>
 let componentWrappingB = (~children, ()) =>
   TestReact.component(() => <bComponent />, ~children);
 
-module ComponentWrappingB = (val TestReact.component2((~children, ()) => {
+module ComponentWrappingB = (val TestReact.component2((render, ~children, ()) => {
+    print_endline(render);
     TestReact.component(() => <bComponent />, ~children);
 }));
 

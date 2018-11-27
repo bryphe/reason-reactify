@@ -73,7 +73,9 @@ module type React = {
     let createElement: t;
   };
 
-  let component2: ('a) => (module COMPONENT with type t = 'a);
+  type func('a) = string => 'a;
+
+  let component2: (func('a)) => (module COMPONENT with type t = 'a);
 
   /*
        Component API

@@ -148,10 +148,13 @@ module Make = (ReconcilerImpl: Reconciler) => {
     let createElement: t;
   };
 
+  type func('a) = string => 'a;
+
   let component2 = (type a, fn): (module COMPONENT with type t = a) => {
+      let boundFunc = fn("WOWEEEEE");
     (module {        
         type t = a;
-        let createElement = fn;
+        let createElement = boundFunc;
     }) 
   };
 
