@@ -142,16 +142,37 @@ module Make = (ReconcilerImpl: Reconciler) => {
     ret;
   };
 
+  type renderFunction = (~children:list(component)=?, componentFunction) => component;
+  let render2: renderFunction = (~children:option(list(component))=?, c) => {
+    ignore(children);
+    let ret: component = {
+      element: Component("1"),
+      render: () => {
+        Effects.resetEffects(__globalEffects);
+        let children: list(component) = [c()];
+        let effects = Effects.getEffects(__globalEffects);
+        let renderResult: elementWithChildren = (
+          Component("1"),
+          children,
+          effects,
+          __globalContext^,
+        );
+        renderResult;
+      },
+    };
+    ret;
+  };
+
   module type COMPONENT = {
     type t;
     /* let derp: unit => unit; */
     let createElement: t;
   };
 
-  type func('a) = string => 'a;
+  type func('a) = renderFunction => 'a;
 
   let component2 = (type a, fn): (module COMPONENT with type t = a) => {
-      let boundFunc = fn("WOWEEEEE");
+      let boundFunc = fn(render2);
     (module {        
         type t = a;
         let createElement = boundFunc;

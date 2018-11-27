@@ -73,7 +73,8 @@ module type React = {
     let createElement: t;
   };
 
-  type func('a) = string => 'a;
+  type renderFunction = (~children:childComponents=?, componentFunction) => component;
+  type func('a) = renderFunction => 'a;
 
   let component2: (func('a)) => (module COMPONENT with type t = 'a);
 

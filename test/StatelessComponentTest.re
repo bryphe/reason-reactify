@@ -6,6 +6,7 @@ open Rejest;
 
 /* Use our Reconciler to create our own instance */
 module TestReact = Reactify.Make(TestReconciler);
+open TestReact;
 
 let createRootNode = () => {children: ref([]), nodeId: 0, nodeType: Root};
 
@@ -19,9 +20,10 @@ let cComponent = (~children, ()) =>
 let componentWrappingB = (~children, ()) =>
   TestReact.component(() => <bComponent />, ~children);
 
-module ComponentWrappingB = (val TestReact.component2((render, ~children, ()) => {
-    print_endline(render);
-    TestReact.component(() => <bComponent />, ~children);
+module ComponentWrappingB = (val component2((render, ~x, ~children, ()) => {
+    render(() => {
+        <aComponent testVal=x/>
+    }, ~children);
 }));
 
 test("StatelessComponentTest", () => {
@@ -32,7 +34,7 @@ test("StatelessComponentTest", () => {
     let expectedStructure: tree(primitives) =
       TreeNode(Root, [TreeLeaf(B)]);
 
-    TestReact.updateContainer(container, <ComponentWrappingB />);
+    TestReact.updateContainer(container, <ComponentWrappingB x=5/>);
 
     validateStructure(rootNode, expectedStructure);
   });
