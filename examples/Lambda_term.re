@@ -129,6 +129,7 @@ let incrementingButton = (~children, ()) =>
 
       <button text onClick=update />;
     },
+    ~uniqueId="incrementingButton",
     ~children,
   );
 
@@ -150,6 +151,7 @@ let clock = (~children, ()) =>
 
       <label text={"Time: " ++ string_of_float(time)} />;
     },
+    ~uniqueId="clock",
     ~children,
   );
 
