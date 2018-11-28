@@ -65,7 +65,7 @@ module type React = {
    */
   let primitiveComponent:
     (~children: childComponents, primitives) => component;
-  let component:
+  let component2:
     (~children: childComponents=?, ~uniqueId:string=?, componentFunction) => component;
 
   module type COMPONENT = {
@@ -76,7 +76,7 @@ module type React = {
   type renderFunction = (~children:childComponents=?, componentFunction) => component;
   type func('a) = renderFunction => 'a;
 
-  let component2: (func('a)) => (module COMPONENT with type t = 'a);
+  let component: (func('a)) => (module COMPONENT with type t = 'a);
 
   /*
        Component API

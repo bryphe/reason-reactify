@@ -122,7 +122,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
     render: () => (Empty, [], [], __globalContext^),
   };
 
-  let component = (~children: childComponents=[], ~uniqueId:string="", c: componentFunction) => {
+  let component2 = (~children: childComponents=[], ~uniqueId:string="", c: componentFunction) => {
     let ret: component = {
       element: Component(uniqueId),
       render: () => {
@@ -171,7 +171,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
 
   type func('a) = renderFunction => 'a;
 
-  let component2 = (type a, fn): (module COMPONENT with type t = a) => {
+  let component = (type a, fn): (module COMPONENT with type t = a) => {
       let boundFunc = fn(render2);
     (module {        
         type t = a;
