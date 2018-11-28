@@ -228,6 +228,9 @@ npm install -g esy
 - `esy install`
 - `esy build`
 
+or build JS:
+- `esy build:js`
+
 ### Running Examples
 
 - `esy b dune build @examples`
@@ -236,7 +239,11 @@ npm install -g esy
 
 ### Running Tests
 
-- `esy b dune runtest test`
+__Native tests:__
+- `esy test:native`
+
+__JS tests:__
+- `esy test:js`
 
 ## Limitations
 
