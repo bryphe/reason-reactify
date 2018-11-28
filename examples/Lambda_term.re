@@ -118,30 +118,27 @@ let button = (~children, ~text, ~onClick, ()) => {
 
     This shows how you can use state with a callback from a primitive.
  */
-let incrementingButton = (~children, ()) =>
-  component(
-    () => {
-      let (count, setCount) = useState(0);
 
+module IncrementingButton = (val component((render, ~children, ()) => {
+    render(() => {
+
+      let (count, setCount) = useState(0);
       let update = () => setCount(count + 1);
 
       let text = count > 0 ? "Pressed!" : "Click me";
 
       <button text onClick=update />;
-    },
-    ~uniqueId="incrementingButton",
-    ~children,
-  );
-
+    }, ~children);
+}));
 /*
     Clock
 
     Custom clock component to show the time. Demonstrates
     use of `useEffect` and `setState` together.
  */
-let clock = (~children, ()) =>
-  component(
-    () => {
+module Clock = (val component((render, ~children, ()) => {
+    render(() => {
+
       let (time, setTime) = useState(0.);
       useEffect(() => {
         let evt = Lwt_engine.on_timer(1.0, true, _ => setTime(Unix.time()));
@@ -150,10 +147,9 @@ let clock = (~children, ()) =>
       });
 
       <label text={"Time: " ++ string_of_float(time)} />;
-    },
-    ~uniqueId="clock",
-    ~children,
-  );
+
+    }, ~children);
+}));
 
 let main = () => {
   let (waiter, wakener) = wait();
@@ -169,8 +165,8 @@ let main = () => {
   let render = () =>
     <vbox>
       <label text="Hello from Reactify!" />
-      <clock />
-      <incrementingButton />
+      <Clock />
+      <IncrementingButton />
       <button onClick=quit text="Quit" />
     </vbox>;
 
