@@ -32,7 +32,7 @@ module type React = {
 
   type element =
     | Primitive(primitives)
-    | Component(string)
+    | Component(ComponentId.t)
     | Provider
     | Empty
   and renderedElement =

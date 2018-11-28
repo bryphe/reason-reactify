@@ -1,9 +1,10 @@
 open Reactify_Types;
 
 module Make = (ReconcilerImpl: Reconciler) => {
+  /* Module to give us unique IDs for components */
   type element =
     | Primitive(ReconcilerImpl.primitives)
-    | Component(string)
+    | Component(ComponentId.t)
     | Provider
     | Empty
   and renderedElement =
@@ -62,6 +63,8 @@ module Make = (ReconcilerImpl: Reconciler) => {
      during the course of a render operation.
    */
   let __globalEffects = Effects.create();
+
+  let _uniqueIdScope = ComponentId.createScope();
 
   /*
       A global, non-pure container to hold current
@@ -125,17 +128,17 @@ module Make = (ReconcilerImpl: Reconciler) => {
 
   type renderFunction =
     (~children: list(component)=?, componentFunction) => component;
-  let render: renderFunction =
-    (~children: option(list(component))=?, c) => {
+  let render =
+    (id: ComponentId.t, ~children: option(list(component))=?, c) => {
       ignore(children);
       let ret: component = {
-        element: Component("1"),
+        element: Component(id),
         render: () => {
           Effects.resetEffects(__globalEffects);
           let children: list(component) = [c()];
           let effects = Effects.getEffects(__globalEffects);
           let renderResult: elementWithChildren = (
-            Component("1"),
+            Component(id),
             children,
             effects,
             __globalContext^,
@@ -155,7 +158,8 @@ module Make = (ReconcilerImpl: Reconciler) => {
   type func('a) = renderFunction => 'a;
 
   let component = (type a, fn): (module Component with type t = a) => {
-    let boundFunc = fn(render);
+    let id = ComponentId.newId(_uniqueIdScope);
+    let boundFunc = fn(render(id));
     (module
      {
        type t = a;
