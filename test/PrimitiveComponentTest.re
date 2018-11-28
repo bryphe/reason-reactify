@@ -7,6 +7,7 @@ open TestUtility;
 /* Use our Reconciler to create our own instance */
 module TestReact = Reactify.Make(TestReconciler);
 open TestReact;
+
 let createRootNode = () => {children: ref([]), nodeId: 0, nodeType: Root};
 
 let aComponent = (~testVal, ~children, ()) =>

@@ -122,28 +122,8 @@ module Make = (ReconcilerImpl: Reconciler) => {
     render: () => (Empty, [], [], __globalContext^),
   };
 
-  let component2 = (~children: childComponents=[], ~uniqueId:string="", c: componentFunction) => {
-    let ret: component = {
-      element: Component(uniqueId),
-      render: () => {
-        Effects.resetEffects(__globalEffects);
-        let _dummy = children;
-        let children: list(component) = [c()];
-        let effects = Effects.getEffects(__globalEffects);
-        let renderResult: elementWithChildren = (
-          Component(uniqueId),
-          children,
-          effects,
-          __globalContext^,
-        );
-        renderResult;
-      },
-    };
-    ret;
-  };
-
   type renderFunction = (~children:list(component)=?, componentFunction) => component;
-  let render2: renderFunction = (~children:option(list(component))=?, c) => {
+  let render: renderFunction = (~children:option(list(component))=?, c) => {
     ignore(children);
     let ret: component = {
       element: Component("1"),
@@ -163,7 +143,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
     ret;
   };
 
-  module type COMPONENT = {
+  module type Component = {
     type t;
     /* let derp: unit => unit; */
     let createElement: t;
@@ -171,8 +151,8 @@ module Make = (ReconcilerImpl: Reconciler) => {
 
   type func('a) = renderFunction => 'a;
 
-  let component = (type a, fn): (module COMPONENT with type t = a) => {
-      let boundFunc = fn(render2);
+  let component = (type a, fn): (module Component with type t = a) => {
+      let boundFunc = fn(render);
     (module {        
         type t = a;
         let createElement = boundFunc;
