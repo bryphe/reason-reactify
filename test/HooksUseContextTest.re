@@ -32,6 +32,7 @@ test("HooksUseContext", () => {
 
           <aComponent testVal=ctx />;
         },
+        ~uniqueId="componentThatUsesContext",
         ~children,
       );
 
@@ -56,6 +57,7 @@ test("HooksUseContext", () => {
 
           <provider value=9> <aComponent testVal=ctx /> </provider>;
         },
+        ~uniqueId="componentThatUsesContext",
         ~children,
       );
 
@@ -79,6 +81,7 @@ test("HooksUseContext", () => {
           let ctx = TestReact.useContext(testContext);
           <aComponent testVal=ctx />;
         },
+        ~uniqueId="componentThatUsesContext",
         ~children,
       );
 

@@ -49,6 +49,7 @@ test("Container", () => {
 
         <aComponent testVal=s />;
       },
+      ~uniqueId="componentThatUpdatesState",
       ~children,
     );
 

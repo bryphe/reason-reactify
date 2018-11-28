@@ -138,7 +138,6 @@ test("useEffect", () => {
         functionToCallOnUnmount=noop
       />,
     );
-    print_endline ("** SECOND UPDATE **");
     TestReact.updateContainer(
       container,
       <componentWithEmptyConditionalEffect
@@ -146,7 +145,6 @@ test("useEffect", () => {
         functionToCallOnUnmount=noop
       />,
     );
-    print_endline ("** SECOND UPDATE **");
 
     expect(v^).toBe(1);
   });

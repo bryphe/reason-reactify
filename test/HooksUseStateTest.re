@@ -163,6 +163,7 @@ test("useState", () => {
 
         <aComponent testVal=s> ...children </aComponent>;
       },
+      ~uniqueId="componentThatUpdatesStateAndRendersChildren",
       ~children,
     );
 
@@ -217,6 +218,7 @@ test("useState", () => {
         | AComponent(x) => <aComponent testVal=x />
         };
       },
+      ~uniqueId="componentThatWrapsEitherPrimitiveOrComponent",
       ~children,
     );
 
