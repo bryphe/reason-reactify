@@ -3,6 +3,11 @@
   "version": "1.1.0",
   "description": "Reason workflow with Esy",
   "license": "MIT",
+  "scripts": {
+    "build:js": "esy b dune build test/Test.bc.js",
+    "test:native": "esy b dune runtest",
+    "test:js": "node _build/default/test/Test.bc.js"
+  },
   "esy": {
     "build": "refmterr dune build -p reactify",
     "buildsInSource": "_build"
@@ -14,6 +19,7 @@
     "ocaml": "~4.6.0",
     "refmterr": "*",
     "@opam/lambda-term": "^1.11.0",
+    "@opam/js_of_ocaml-compiler": "*",
     "rejest": "^1.1.0"
   },
   "resolutions": {

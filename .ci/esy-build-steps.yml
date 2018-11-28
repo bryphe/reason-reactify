@@ -11,5 +11,7 @@ steps:
     continueOnError: true
   - script: esy install
   - script: esy build
-  - script: esy b dune runtest test
+  - script: esy test:native
+  - script: esy build:js
+  - script: esy test:js
   - script: esy b dune build @examples
