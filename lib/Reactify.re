@@ -122,11 +122,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
     render: () => (Empty, [], [], __globalContext^),
   };
 
-<<<<<<< HEAD
   let component = (~children: childComponents=[], ~uniqueId:string="", c: componentFunction) => {
-=======
-  let component = (~children: childComponents=[], ~uniqueId:string, c: componentFunction) => {
->>>>>>> master
     let ret: component = {
       element: Component(uniqueId),
       render: () => {
@@ -136,7 +132,6 @@ module Make = (ReconcilerImpl: Reconciler) => {
         let effects = Effects.getEffects(__globalEffects);
         let renderResult: elementWithChildren = (
           Component(uniqueId),
-<<<<<<< HEAD
           children,
           effects,
           __globalContext^,
@@ -158,8 +153,6 @@ module Make = (ReconcilerImpl: Reconciler) => {
         let effects = Effects.getEffects(__globalEffects);
         let renderResult: elementWithChildren = (
           Component("1"),
-=======
->>>>>>> master
           children,
           effects,
           __globalContext^,
@@ -296,16 +289,9 @@ module Make = (ReconcilerImpl: Reconciler) => {
         
     /* Recycle any previous effect instances */
     let previousEffectInstances = _getEffectsFromInstance(previousInstance);
-    /* Effects.runEffectInstances(previousEffectInstances); */
-<<<<<<< HEAD
 
     let isSameInstanceAsBefore = isInstanceOfComponent(previousInstance, component)
 
-=======
-
-    let isSameInstanceAsBefore = isInstanceOfComponent(previousInstance, component)
-
->>>>>>> master
     if (isSameInstanceAsBefore) {
         /* Set up state for the component */
         previousState := _getCurrentStateFromInstance(previousInstance);
@@ -332,17 +318,9 @@ module Make = (ReconcilerImpl: Reconciler) => {
 
     let newEffectInstances = switch (isSameInstanceAsBefore) {
     | true => {
-<<<<<<< HEAD
-        print_endline ("same instance");
         Effects.runEffects(~previousInstances=previousEffectInstances, effects);    
     }
     | false => {
-        print_endline ("different instance");
-=======
-        Effects.runEffects(~previousInstances=previousEffectInstances, effects);    
-    }
-    | false => {
->>>>>>> master
         Effects.drainEffects(previousEffectInstances);
         let emptyInstances = Effects.createEmptyEffectInstances(newEffectCount);
         Effects.runEffects(~previousInstances=emptyInstances, effects);
