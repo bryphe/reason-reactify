@@ -7,14 +7,14 @@ module Event = Reactify.Event;
 
 /* Use our Reconciler to create our own instance */
 module TestReact = Reactify.Make(TestReconciler);
+open TestReact;
+
 let createRootNode = () => {children: ref([]), nodeId: 0, nodeType: Root};
 
 let aComponent = (~testVal, ~children, ()) =>
-  TestReact.primitiveComponent(A(testVal), ~children);
-let bComponent = (~children, ()) =>
-  TestReact.primitiveComponent(B, ~children);
-let cComponent = (~children, ()) =>
-  TestReact.primitiveComponent(C, ~children);
+  primitiveComponent(A(testVal), ~children);
+let bComponent = (~children, ()) => primitiveComponent(B, ~children);
+let cComponent = (~children, ()) => primitiveComponent(C, ~children);
 
 test("Container", () => {
   test("beginReconcile / endReconcile are called for updateContainer", () => {
@@ -28,30 +28,32 @@ test("Container", () => {
     let onEndReconcile = _node => endCount := endCount^ + 1;
 
     let container =
-      TestReact.createContainer(~onBeginReconcile, ~onEndReconcile, rootNode);
+      createContainer(~onBeginReconcile, ~onEndReconcile, rootNode);
 
-    TestReact.updateContainer(container, <bComponent />);
+    updateContainer(container, <bComponent />);
 
     assert(beginCount^ == 1);
     assert(endCount^ == 1);
   });
 
-  let componentThatUpdatesState = (~children, ~event: Event.t(int), ()) =>
-    TestReact.component(
-      () => {
-        let (s, setS) = TestReact.useState(2);
+  module ComponentThatUpdatesState = (
+    val component((render, ~children, ~event: Event.t(int), ()) =>
+          render(
+            () => {
+              let (s, setS) = useState(2);
 
-        print_endline("Value: " ++ string_of_int(s));
-        TestReact.useEffect(() => {
-          let unsubscribe = Event.subscribe(event, v => setS(v));
-          () => unsubscribe();
-        });
+              print_endline("Value: " ++ string_of_int(s));
+              useEffect(() => {
+                let unsubscribe = Event.subscribe(event, v => setS(v));
+                () => unsubscribe();
+              });
 
-        <aComponent testVal=s />;
-      },
-      ~uniqueId="componentThatUpdatesState",
-      ~children,
-    );
+              <aComponent testVal=s />;
+            },
+            ~children,
+          )
+        )
+  );
 
   test("beginReconcile / endReconcile are called when updating state", () => {
     let rootNode = createRootNode();
@@ -64,10 +66,10 @@ test("Container", () => {
     let onEndReconcile = _node => endCount := endCount^ + 1;
 
     let container =
-      TestReact.createContainer(~onBeginReconcile, ~onEndReconcile, rootNode);
+      createContainer(~onBeginReconcile, ~onEndReconcile, rootNode);
 
     let event: Event.t(int) = Event.create();
-    TestReact.updateContainer(container, <componentThatUpdatesState event />);
+    updateContainer(container, <ComponentThatUpdatesState event />);
 
     beginCount := 0;
     endCount := 0;

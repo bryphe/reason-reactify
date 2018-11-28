@@ -6,140 +6,148 @@ open Rejest;
 
 /* Use our Reconciler to create our own instance */
 module TestReact = Reactify.Make(TestReconciler);
+open TestReact;
 
 let createRootNode = () => {children: ref([]), nodeId: 0, nodeType: Root};
 
 let aComponent = (~testVal, ~children, ()) =>
-  TestReact.primitiveComponent(A(testVal), ~children);
-let bComponent = (~children, ()) =>
-  TestReact.primitiveComponent(B, ~children);
-let cComponent = (~children, ()) =>
-  TestReact.primitiveComponent(C, ~children);
+  primitiveComponent(A(testVal), ~children);
+let bComponent = (~children, ()) => primitiveComponent(B, ~children);
+let cComponent = (~children, ()) => primitiveComponent(C, ~children);
 
-let componentWrappingB = (~children, ()) =>
-  TestReact.component(() => <bComponent />, 
-  ~uniqueId="componentWrappingB",
-  ~children);
+module ComponentWrappingB = (
+  val component((render, ~children, ()) =>
+        render(() => <bComponent />, ~children)
+      )
+);
 
 test("StatelessComponentTest", () => {
   test("Rendering simple wrapped component", () => {
     let rootNode = createRootNode();
-    let container = TestReact.createContainer(rootNode);
+    let container = createContainer(rootNode);
 
     let expectedStructure: tree(primitives) =
       TreeNode(Root, [TreeLeaf(B)]);
 
-    TestReact.updateContainer(container, <componentWrappingB />);
+    updateContainer(container, <ComponentWrappingB />);
 
     validateStructure(rootNode, expectedStructure);
   });
 
-  let componentWrappingAWithProps = (~children, ~v, ()) =>
-    TestReact.component(() => <aComponent testVal=v />, ~uniqueId="componentWrappingAWithProps", ~children);
+  module ComponentWrappingAWithProps = (
+    val component((render, ~children, ~v, ()) =>
+          render(() => <aComponent testVal=v />, ~children)
+        )
+  );
 
   test("Rendering wrapped component with prop", () => {
     let rootNode = createRootNode();
-    let container = TestReact.createContainer(rootNode);
+    let container = createContainer(rootNode);
 
     let expectedStructure: tree(primitives) =
       TreeNode(Root, [TreeLeaf(A(7))]);
 
-    TestReact.updateContainer(container, <componentWrappingAWithProps v=7 />);
+    updateContainer(container, <ComponentWrappingAWithProps v=7 />);
 
     validateStructure(rootNode, expectedStructure);
   });
 
   test("Rendering wrapped component multiple times with prop", () => {
     let rootNode = createRootNode();
-    let container = TestReact.createContainer(rootNode);
+    let container = createContainer(rootNode);
 
     let expectedStructure: tree(primitives) =
       TreeNode(Root, [TreeLeaf(A(7))]);
 
-    TestReact.updateContainer(container, <componentWrappingAWithProps v=7 />);
+    updateContainer(container, <ComponentWrappingAWithProps v=7 />);
     validateStructure(rootNode, expectedStructure);
 
-    TestReact.updateContainer(container, <componentWrappingAWithProps v=7 />);
+    updateContainer(container, <ComponentWrappingAWithProps v=7 />);
     validateStructure(rootNode, expectedStructure);
 
     let expectedStructure: tree(primitives) =
       TreeNode(Root, [TreeLeaf(A(8))]);
 
-    TestReact.updateContainer(container, <componentWrappingAWithProps v=8 />);
+    updateContainer(container, <ComponentWrappingAWithProps v=8 />);
     validateStructure(rootNode, expectedStructure);
 
     let expectedStructure: tree(primitives) =
       TreeNode(Root, [TreeLeaf(A(9))]);
 
-    TestReact.updateContainer(container, <componentWrappingAWithProps v=9 />);
+    updateContainer(container, <ComponentWrappingAWithProps v=9 />);
     validateStructure(rootNode, expectedStructure);
   });
 
   test("Replace primitive component to wrapped component", () => {
     let rootNode = createRootNode();
-    let container = TestReact.createContainer(rootNode);
+    let container = createContainer(rootNode);
 
     let expectedStructure: tree(primitives) =
       TreeNode(Root, [TreeLeaf(B)]);
 
-    TestReact.updateContainer(container, <bComponent />);
+    updateContainer(container, <bComponent />);
     validateStructure(rootNode, expectedStructure);
 
-    TestReact.updateContainer(container, <componentWrappingB />);
+    updateContainer(container, <ComponentWrappingB />);
     validateStructure(rootNode, expectedStructure);
   });
 
   test("Replace wrapped component with primitive component", () => {
     let rootNode = createRootNode();
-    let container = TestReact.createContainer(rootNode);
+    let container = createContainer(rootNode);
 
     let expectedStructure: tree(primitives) =
       TreeNode(Root, [TreeLeaf(B)]);
 
-    TestReact.updateContainer(container, <componentWrappingB />);
+    updateContainer(container, <ComponentWrappingB />);
     validateStructure(rootNode, expectedStructure);
 
-    TestReact.updateContainer(container, <bComponent />);
+    updateContainer(container, <bComponent />);
     validateStructure(rootNode, expectedStructure);
   });
 
-  let componentWithWrappedComponents = (~children, ()) =>
-    TestReact.component(
-      () => <aComponent testVal=1> <componentWrappingB /> </aComponent>,
-      ~uniqueId="componentWithWrappedComponents",
-      ~children,
-    );
+  module ComponentWithWrappedComponents = (
+    val component((render, ~children, ()) =>
+          render(
+            () => <aComponent testVal=1> <ComponentWrappingB /> </aComponent>,
+            ~children,
+          )
+        )
+  );
 
   test("Rendering wrapped component with wrappedComponent as child prop", () => {
     let rootNode = createRootNode();
-    let container = TestReact.createContainer(rootNode);
+    let container = createContainer(rootNode);
 
     let expectedStructure: tree(primitives) =
       TreeNode(Root, [TreeNode(A(1), [TreeLeaf(B)])]);
 
-    TestReact.updateContainer(container, <componentWithWrappedComponents />);
+    updateContainer(container, <ComponentWithWrappedComponents />);
 
     validateStructure(rootNode, expectedStructure);
   });
 
-  let componentThatRendersChildren = (~children, ()) =>
-    TestReact.component(~uniqueId="componentThatRendersChildren",
-      () => <aComponent testVal=1> ...children </aComponent>,
-      ~children,
-    );
+  module ComponentThatRendersChildren = (
+    val component((render, ~children, ()) =>
+          render(
+            () => <aComponent testVal=1> ...children </aComponent>,
+            ~children,
+          )
+        )
+  );
 
   test("Rendering component that renders primitive child", () => {
     let rootNode = createRootNode();
-    let container = TestReact.createContainer(rootNode);
+    let container = createContainer(rootNode);
 
     let expectedStructure: tree(primitives) =
       TreeNode(Root, [TreeNode(A(1), [TreeLeaf(B)])]);
 
-    TestReact.updateContainer(
+    updateContainer(
       container,
-      <componentThatRendersChildren>
+      <ComponentThatRendersChildren>
         <bComponent />
-      </componentThatRendersChildren>,
+      </ComponentThatRendersChildren>,
     );
 
     validateStructure(rootNode, expectedStructure);
@@ -147,47 +155,51 @@ test("StatelessComponentTest", () => {
 
   test("Rendering component that renders component child", () => {
     let rootNode = createRootNode();
-    let container = TestReact.createContainer(rootNode);
+    let container = createContainer(rootNode);
 
     let expectedStructure: tree(primitives) =
       TreeNode(Root, [TreeNode(A(1), [TreeLeaf(B)])]);
 
-    TestReact.updateContainer(
+    updateContainer(
       container,
-      <componentThatRendersChildren>
-        <componentWrappingB />
-      </componentThatRendersChildren>,
+      <ComponentThatRendersChildren>
+        <ComponentWrappingB />
+      </ComponentThatRendersChildren>,
     );
 
     validateStructure(rootNode, expectedStructure);
   });
 
-  let componentWithVisibilityToggle = (~children, ~visible=true, ()) =>
-    TestReact.component(~uniqueId="componentWithVisibilityToggle", () =>
-      visible ?
-        <aComponent testVal=1> ...children </aComponent> : TestReact.empty
-    );
+  module ComponentWithVisibilityToggle = (
+    val component((render, ~visible=true, ~children, ()) =>
+          render(() =>
+            visible ?
+              <aComponent testVal=1> ...children </aComponent> :
+              TestReact.empty
+          )
+        )
+  );
 
   test("Test toggling visibility", () => {
     let rootNode = createRootNode();
-    let container = TestReact.createContainer(rootNode);
+    let container = createContainer(rootNode);
 
     let expectedStructure: tree(primitives) =
       TreeNode(Root, [TreeNode(A(1), [TreeLeaf(B)])]);
 
-    TestReact.updateContainer(
+    updateContainer(
       container,
-      <componentWithVisibilityToggle visible=true>
-        <componentWrappingB />
-      </componentWithVisibilityToggle>,
+      <ComponentWithVisibilityToggle visible=true>
+        <ComponentWrappingB />
+      </ComponentWithVisibilityToggle>,
     );
     validateStructure(rootNode, expectedStructure);
 
-    TestReact.updateContainer(
+    updateContainer(
       container,
-      <componentWithVisibilityToggle visible=false>
-        <componentWrappingB />
-      </componentWithVisibilityToggle>,
+      <ComponentWithVisibilityToggle visible=false>
+        <ComponentWrappingB />
+      </ComponentWithVisibilityToggle>,
     );
     let expectedStructure: tree(primitives) = TreeLeaf(Root);
     validateStructure(rootNode, expectedStructure);

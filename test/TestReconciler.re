@@ -22,13 +22,13 @@ type updateType =
 let updates: ref(list(updateType)) = ref([]);
 
 let printUpdate = _u => ();
-  /* switch (u) { */
-  /* | Append => print_endline("- append") */
-  /* | Create => print_endline("- create") */
-  /* | Remove => print_endline("- remove") */
-  /* | Update => print_endline("- update") */
-  /* | Replace => print_endline("- replace") */
-  /* }; */
+/* switch (u) { */
+/* | Append => print_endline("- append") */
+/* | Create => print_endline("- create") */
+/* | Remove => print_endline("- remove") */
+/* | Update => print_endline("- update") */
+/* | Replace => print_endline("- replace") */
+/* }; */
 
 let _currentId = ref(1);
 
@@ -105,7 +105,7 @@ let updateInstance = (node, oldPrim, newPrim) => {
     /* print_endline( */
     /*   "Updating A to: " ++ string_of_int(n) ++ " from: " ++ string_of_int(o), */
     /* ); */
-    node.nodeType = A(n);
+    node.nodeType = A(n)
   | _ => print_endline("Unhandled primitive in updateInstance")
   };
   ();

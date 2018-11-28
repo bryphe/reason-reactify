@@ -8,69 +8,76 @@ module Event = Reactify.Event;
 
 /* Use our Reconciler to create our own instance */
 module TestReact = Reactify.Make(TestReconciler);
+open TestReact;
 
 let createRootNode = () => {children: ref([]), nodeId: 0, nodeType: Root};
 
 let aComponent = (~testVal, ~children, ()) =>
-  TestReact.primitiveComponent(A(testVal), ~children);
-let bComponent = (~children, ()) =>
-  TestReact.primitiveComponent(B, ~children);
-let cComponent = (~children, ()) =>
-  TestReact.primitiveComponent(C, ~children);
+  primitiveComponent(A(testVal), ~children);
+let bComponent = (~children, ()) => primitiveComponent(B, ~children);
+let cComponent = (~children, ()) => primitiveComponent(C, ~children);
 
-let componentWithState = (~children, ()) =>
-  TestReact.component(
-    () => {
-      let (s, _setS) = TestReact.useState(2);
-      <aComponent testVal=s />;
-    },
-    ~uniqueId="componentWithState",
-    ~children,
-  );
+module ComponentWithState = (
+  val component((render, ~children, ()) =>
+        render(
+          () => {
+            /* Hooks */
+            let (s, _setS) = useState(2);
+            /* End hooks */
+
+            <aComponent testVal=s />;
+          },
+          ~children,
+        )
+      )
+);
 
 type renderOption =
   /* | Nothing */
-  | ComponentWithState
-  | AComponent(int);
+  | RenderAComponentWithState
+  | RenderAComponent(int);
 
 test("useState", () => {
   test("useState uses initial state", () => {
     let rootNode = createRootNode();
-    let container = TestReact.createContainer(rootNode);
+    let container = createContainer(rootNode);
 
     let expectedStructure: tree(primitives) =
       TreeNode(Root, [TreeLeaf(A(2))]);
 
-    TestReact.updateContainer(container, <componentWithState />);
+    updateContainer(container, <ComponentWithState />);
 
     validateStructure(rootNode, expectedStructure);
   });
 
-  let componentThatUpdatesState = (~children, ~event: Event.t(int), ()) =>
-    TestReact.component(
-      () => {
-        let (s, setS) = TestReact.useState(2);
+  module ComponentThatUpdatesState = (
+    val component((render, ~children, ~event: Event.t(int), ()) =>
+          render(
+            () => {
+              /* Hooks */
+              let (s, setS) = useState(2);
+              /* End hooks */
 
-        print_endline("Value: " ++ string_of_int(s));
-        TestReact.useEffect(() => {
-          let unsubscribe = Event.subscribe(event, v => setS(v));
-          () => unsubscribe();
-        });
+              useEffect(() => {
+                let unsubscribe = Event.subscribe(event, v => setS(v));
+                () => unsubscribe();
+              });
 
-        <aComponent testVal=s />;
-      },
-      ~uniqueId="componentThatUpdatesState",
-      ~children,
-    );
+              <aComponent testVal=s />;
+            },
+            ~children,
+          )
+        )
+  );
 
   test("useState updates state with set function", () => {
     let rootNode = createRootNode();
 
-    let container = TestReact.createContainer(rootNode);
+    let container = createContainer(rootNode);
 
     let event: Event.t(int) = Event.create();
 
-    TestReact.updateContainer(container, <componentThatUpdatesState event />);
+    updateContainer(container, <ComponentThatUpdatesState event />);
 
     Event.dispatch(event, 5);
 
@@ -82,11 +89,11 @@ test("useState", () => {
   test("useState doesn't leak state between components", () => {
     let rootNode = createRootNode();
 
-    let container = TestReact.createContainer(rootNode);
+    let container = createContainer(rootNode);
 
     let event: Event.t(int) = Event.create();
 
-    TestReact.updateContainer(container, <componentThatUpdatesState event />);
+    updateContainer(container, <ComponentThatUpdatesState event />);
 
     Event.dispatch(event, 5);
 
@@ -94,7 +101,7 @@ test("useState", () => {
       TreeNode(Root, [TreeLeaf(A(5))]);
     validateStructure(rootNode, expectedStructure);
 
-    TestReact.updateContainer(container, <componentWithState />);
+    updateContainer(container, <ComponentWithState />);
 
     /* The 'componentWithState' should have its own state, so it should revert back to 2 - */
     /* and not pick up the state from the previous component */
@@ -106,11 +113,11 @@ test("useState", () => {
   test("useState set state persists across renders", () => {
     let rootNode = createRootNode();
 
-    let container = TestReact.createContainer(rootNode);
+    let container = createContainer(rootNode);
 
     let event: Event.t(int) = Event.create();
 
-    TestReact.updateContainer(container, <componentThatUpdatesState event />);
+    updateContainer(container, <ComponentThatUpdatesState event />);
 
     Event.dispatch(event, 5);
 
@@ -118,7 +125,7 @@ test("useState", () => {
       TreeNode(Root, [TreeLeaf(A(5))]);
     validateStructure(rootNode, expectedStructure);
 
-    TestReact.updateContainer(container, <componentThatUpdatesState event />);
+    updateContainer(container, <ComponentThatUpdatesState event />);
 
     let expectedStructure: tree(primitives) =
       TreeNode(Root, [TreeLeaf(A(5))]);
@@ -127,11 +134,11 @@ test("useState", () => {
 
   test("useState can update multiple times", () => {
     let rootNode = createRootNode();
-    let container = TestReact.createContainer(rootNode);
+    let container = createContainer(rootNode);
 
     let event: Event.t(int) = Event.create();
 
-    TestReact.updateContainer(container, <componentThatUpdatesState event />);
+    updateContainer(container, <ComponentThatUpdatesState event />);
 
     Event.dispatch(event, 5);
     let expectedStructure: tree(primitives) =
@@ -149,36 +156,38 @@ test("useState", () => {
     validateStructure(rootNode, expectedStructure);
   });
 
-  let componentThatUpdatesStateAndRendersChildren =
-      (~children, ~event: Event.t(int), ()) =>
-    TestReact.component(
-      () => {
-        let (s, setS) = TestReact.useState(2);
+  module ComponentThatUpdatesStateAndRendersChildren = (
+    val component((render, ~children, ~event: Event.t(int), ()) =>
+          render(
+            () => {
+              /* Hooks */
+              let (s, setS) = useState(2);
 
-        print_endline("Value: " ++ string_of_int(s));
-        TestReact.useEffect(() => {
-          let unsubscribe = Event.subscribe(event, v => setS(v));
-          () => unsubscribe();
-        });
+              useEffect(() => {
+                let unsubscribe = Event.subscribe(event, v => setS(v));
+                () => unsubscribe();
+              });
+              /* End Hooks */
 
-        <aComponent testVal=s> ...children </aComponent>;
-      },
-      ~uniqueId="componentThatUpdatesStateAndRendersChildren",
-      ~children,
-    );
+              <aComponent testVal=s> ...children </aComponent>;
+            },
+            ~children,
+          )
+        )
+  );
 
   test("nested state works as expected", () => {
     let rootNode = createRootNode();
-    let container = TestReact.createContainer(rootNode);
+    let container = createContainer(rootNode);
 
     let outerEvent = Event.create();
     let innerEvent = Event.create();
 
-    TestReact.updateContainer(
+    updateContainer(
       container,
-      <componentThatUpdatesStateAndRendersChildren event=outerEvent>
-        <componentThatUpdatesState event=innerEvent />
-      </componentThatUpdatesStateAndRendersChildren>,
+      <ComponentThatUpdatesStateAndRendersChildren event=outerEvent>
+        <ComponentThatUpdatesState event=innerEvent />
+      </ComponentThatUpdatesStateAndRendersChildren>,
     );
 
     let expectedStructure: tree(primitives) =
@@ -201,52 +210,55 @@ test("useState", () => {
     validateStructure(rootNode, expectedStructure);
   });
 
-  let componentThatWrapsEitherPrimitiveOrComponent =
-      (~children, ~event: Event.t(renderOption), ()) =>
-    TestReact.component(
-      () => {
-        let (s, setS) = TestReact.useState(ComponentWithState);
+  module ComponentThatWrapsEitherPrimitiveOrComponent = (
+    val component((render, ~children, ~event: Event.t(renderOption), ()) =>
+          render(
+            () => {
+              /* Hooks */
+              let (s, setS) = useState(RenderAComponentWithState);
 
-        TestReact.useEffect(() => {
-          let unsubscribe = Event.subscribe(event, v => setS(v));
-          () => unsubscribe();
-        });
+              useEffect(() => {
+                let unsubscribe = Event.subscribe(event, v => setS(v));
+                () => unsubscribe();
+              });
+              /* End Hook */
 
-        switch (s) {
-        /* | Nothing => () */
-        | ComponentWithState => <componentWithState />
-        | AComponent(x) => <aComponent testVal=x />
-        };
-      },
-      ~uniqueId="componentThatWrapsEitherPrimitiveOrComponent",
-      ~children,
-    );
+              switch (s) {
+              /* | Nothing => () */
+              | RenderAComponentWithState => <ComponentWithState />
+              | RenderAComponent(x) => <aComponent testVal=x />
+              };
+            },
+            ~children,
+          )
+        )
+  );
 
   test("switching between a component to a primitive and back works", () => {
     let rootNode = createRootNode();
-    let container = TestReact.createContainer(rootNode);
+    let container = createContainer(rootNode);
 
     let boolEvent: Event.t(renderOption) = Event.create();
-    TestReact.updateContainer(
+    updateContainer(
       container,
-      <componentThatWrapsEitherPrimitiveOrComponent event=boolEvent />,
+      <ComponentThatWrapsEitherPrimitiveOrComponent event=boolEvent />,
     );
 
     let expectedStructure: tree(primitives) =
       TreeNode(Root, [TreeLeaf(A(2))]);
     validateStructure(rootNode, expectedStructure);
 
-    Event.dispatch(boolEvent, AComponent(3));
+    Event.dispatch(boolEvent, RenderAComponent(3));
     let expectedStructure: tree(primitives) =
       TreeNode(Root, [TreeLeaf(A(3))]);
     validateStructure(rootNode, expectedStructure);
 
-    Event.dispatch(boolEvent, ComponentWithState);
+    Event.dispatch(boolEvent, RenderAComponentWithState);
     let expectedStructure: tree(primitives) =
       TreeNode(Root, [TreeLeaf(A(2))]);
     validateStructure(rootNode, expectedStructure);
 
-    Event.dispatch(boolEvent, AComponent(5));
+    Event.dispatch(boolEvent, RenderAComponent(5));
     let expectedStructure: tree(primitives) =
       TreeNode(Root, [TreeLeaf(A(5))]);
     validateStructure(rootNode, expectedStructure);
