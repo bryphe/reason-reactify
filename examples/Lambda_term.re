@@ -67,7 +67,8 @@ module Reconciler = {
     | Container(z) => (z :> widget)
     };
 
-  let updateInstance = (node: node, _oldPrimitive: primitives, newPrimitive: primitives) =>
+  let updateInstance =
+      (node: node, _oldPrimitive: primitives, newPrimitive: primitives) =>
     switch (newPrimitive, node) {
     | (Label(txt), Label(n)) => n#set_text(txt)
     | (Button(buttonProps), Button(n)) =>
@@ -119,37 +120,45 @@ let button = (~children, ~text, ~onClick, ()) => {
     This shows how you can use state with a callback from a primitive.
  */
 
-module IncrementingButton = (val component((render, ~children, ()) => {
-    render(() => {
+module IncrementingButton = (
+  val component((render, ~children, ()) =>
+        render(
+          () => {
+            let (count, setCount) = useState(0);
+            let update = () => setCount(count + 1);
 
-      let (count, setCount) = useState(0);
-      let update = () => setCount(count + 1);
+            let text = count > 0 ? "Pressed!" : "Click me";
 
-      let text = count > 0 ? "Pressed!" : "Click me";
-
-      <button text onClick=update />;
-    }, ~children);
-}));
+            <button text onClick=update />;
+          },
+          ~children,
+        )
+      )
+);
 /*
     Clock
 
     Custom clock component to show the time. Demonstrates
     use of `useEffect` and `setState` together.
  */
-module Clock = (val component((render, ~children, ()) => {
-    render(() => {
+module Clock = (
+  val component((render, ~children, ()) =>
+        render(
+          () => {
+            let (time, setTime) = useState(0.);
+            useEffect(() => {
+              let evt =
+                Lwt_engine.on_timer(1.0, true, _ => setTime(Unix.time()));
 
-      let (time, setTime) = useState(0.);
-      useEffect(() => {
-        let evt = Lwt_engine.on_timer(1.0, true, _ => setTime(Unix.time()));
+              () => Lwt_engine.stop_event(evt);
+            });
 
-        () => Lwt_engine.stop_event(evt);
-      });
-
-      <label text={"Time: " ++ string_of_float(time)} />;
-
-    }, ~children);
-}));
+            <label text={"Time: " ++ string_of_float(time)} />;
+          },
+          ~children,
+        )
+      )
+);
 
 let main = () => {
   let (waiter, wakener) = wait();
