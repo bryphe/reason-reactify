@@ -14,20 +14,23 @@ let createRootNode = () => {children: ref([]), nodeId: 0, nodeType: Root};
 
 let aComponent = (~testVal, ~children, ()) =>
   primitiveComponent(A(testVal), ~children);
-let bComponent = (~children, ()) =>
-  primitiveComponent(B, ~children);
-let cComponent = (~children, ()) =>
-  primitiveComponent(C, ~children);
+let bComponent = (~children, ()) => primitiveComponent(B, ~children);
+let cComponent = (~children, ()) => primitiveComponent(C, ~children);
 
-module ComponentWithState = (val component((render, ~children, ()) => {
-    render(() => {
-      /* Hooks */
-      let (s, _setS) = useState(2);
-      /* End hooks */
+module ComponentWithState = (
+  val component((render, ~children, ()) =>
+        render(
+          () => {
+            /* Hooks */
+            let (s, _setS) = useState(2);
+            /* End hooks */
 
-      <aComponent testVal=s />;
-    }, ~children);
-}))
+            <aComponent testVal=s />;
+          },
+          ~children,
+        )
+      )
+);
 
 type renderOption =
   /* | Nothing */
@@ -47,20 +50,25 @@ test("useState", () => {
     validateStructure(rootNode, expectedStructure);
   });
 
-  module ComponentThatUpdatesState = (val component((render, ~children, ~event: Event.t(int), ()) => {
-      render(() => {
-        /* Hooks */
-        let (s, setS) = useState(2);
-        /* End hooks */
+  module ComponentThatUpdatesState = (
+    val component((render, ~children, ~event: Event.t(int), ()) =>
+          render(
+            () => {
+              /* Hooks */
+              let (s, setS) = useState(2);
+              /* End hooks */
 
-        useEffect(() => {
-          let unsubscribe = Event.subscribe(event, v => setS(v));
-          () => unsubscribe();
-        });
+              useEffect(() => {
+                let unsubscribe = Event.subscribe(event, v => setS(v));
+                () => unsubscribe();
+              });
 
-        <aComponent testVal=s />;
-      }, ~children);
-  }));
+              <aComponent testVal=s />;
+            },
+            ~children,
+          )
+        )
+  );
 
   test("useState updates state with set function", () => {
     let rootNode = createRootNode();
@@ -148,20 +156,25 @@ test("useState", () => {
     validateStructure(rootNode, expectedStructure);
   });
 
-  module ComponentThatUpdatesStateAndRendersChildren = (val component((render, ~children, ~event: Event.t(int), ()) => {
-    render(() => {
-        /* Hooks */
-        let (s, setS) = useState(2);
-        
-        useEffect(() => {
-          let unsubscribe = Event.subscribe(event, v => setS(v));
-          () => unsubscribe();
-        });
-        /* End Hooks */
+  module ComponentThatUpdatesStateAndRendersChildren = (
+    val component((render, ~children, ~event: Event.t(int), ()) =>
+          render(
+            () => {
+              /* Hooks */
+              let (s, setS) = useState(2);
 
-        <aComponent testVal=s> ...children </aComponent>;
-    }, ~children);
-  }));
+              useEffect(() => {
+                let unsubscribe = Event.subscribe(event, v => setS(v));
+                () => unsubscribe();
+              });
+              /* End Hooks */
+
+              <aComponent testVal=s> ...children </aComponent>;
+            },
+            ~children,
+          )
+        )
+  );
 
   test("nested state works as expected", () => {
     let rootNode = createRootNode();
@@ -197,29 +210,29 @@ test("useState", () => {
     validateStructure(rootNode, expectedStructure);
   });
 
+  module ComponentThatWrapsEitherPrimitiveOrComponent = (
+    val component((render, ~children, ~event: Event.t(renderOption), ()) =>
+          render(
+            () => {
+              /* Hooks */
+              let (s, setS) = useState(RenderAComponentWithState);
 
-module ComponentThatWrapsEitherPrimitiveOrComponent = (val component(
-    (render, ~children, ~event: Event.t(renderOption), ()) => {
-        render(() => {
-            
-            /* Hooks */
-            let (s, setS) = useState(RenderAComponentWithState);
+              useEffect(() => {
+                let unsubscribe = Event.subscribe(event, v => setS(v));
+                () => unsubscribe();
+              });
+              /* End Hook */
 
-            useEffect(() => {
-              let unsubscribe = Event.subscribe(event, v => setS(v));
-              () => unsubscribe();
-            });
-            /* End Hook */
-
-            switch (s) {
-            /* | Nothing => () */
-            | RenderAComponentWithState => <ComponentWithState />
-            | RenderAComponent(x) => <aComponent testVal=x />
-            };
-        },
-        ~children);
-    })
-);
+              switch (s) {
+              /* | Nothing => () */
+              | RenderAComponentWithState => <ComponentWithState />
+              | RenderAComponent(x) => <aComponent testVal=x />
+              };
+            },
+            ~children,
+          )
+        )
+  );
 
   test("switching between a component to a primitive and back works", () => {
     let rootNode = createRootNode();

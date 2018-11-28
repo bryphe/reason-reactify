@@ -12,16 +12,18 @@ let createRootNode = () => {children: ref([]), nodeId: 0, nodeType: Root};
 
 let aComponent = (~testVal, ~children, ()) =>
   primitiveComponent(A(testVal), ~children);
-let bComponent = (~children, ()) =>
-  primitiveComponent(B, ~children);
-let cComponent = (~children, ()) =>
-  primitiveComponent(C, ~children);
+let bComponent = (~children, ()) => primitiveComponent(B, ~children);
+let cComponent = (~children, ()) => primitiveComponent(C, ~children);
 
-module CustomComponent = (val component((render, ~children, ()) => {
-    render(() => {
-      <aComponent testVal=1> <bComponent /> <bComponent /> </aComponent>;
-    }, ~children);  
-}));
+module CustomComponent = (
+  val component((render, ~children, ()) =>
+        render(
+          () =>
+            <aComponent testVal=1> <bComponent /> <bComponent /> </aComponent>,
+          ~children,
+        )
+      )
+);
 
 test("PrimitiveComponent", () => {
   test("BasicRenderTest", () => {

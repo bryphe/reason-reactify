@@ -45,7 +45,6 @@ module Make = (ReconcilerImpl: Reconciler) => {
   and container = {
     onBeginReconcile: Event.t(ReconcilerImpl.node),
     onEndReconcile: Event.t(ReconcilerImpl.node),
-
     rootInstance: ref(option(instance)),
     containerNode: ReconcilerImpl.node,
   }
@@ -86,35 +85,37 @@ module Make = (ReconcilerImpl: Reconciler) => {
    */
   type reconcileNotification = node => unit;
 
-  let createContainer = (~onBeginReconcile:option(reconcileNotification)=?, ~onEndReconcile:option(reconcileNotification)=?, rootNode: ReconcilerImpl.node) => {
-
+  let createContainer =
+      (
+        ~onBeginReconcile: option(reconcileNotification)=?,
+        ~onEndReconcile: option(reconcileNotification)=?,
+        rootNode: ReconcilerImpl.node,
+      ) => {
     let be = Event.create();
     let ee = Event.create();
 
     switch (onBeginReconcile) {
-    | Some(x) => 
-        let _ = Event.subscribe(be, x);
-        ();
+    | Some(x) =>
+      let _ = Event.subscribe(be, x);
+      ();
     | _ => ()
     };
 
     switch (onEndReconcile) {
-    | Some(x) => 
-        let _ = Event.subscribe(ee, x);
-        ();
+    | Some(x) =>
+      let _ = Event.subscribe(ee, x);
+      ();
     | _ => ()
     };
 
     let ret: container = {
-        onBeginReconcile: be,
-        onEndReconcile: ee,
-        containerNode: rootNode, 
-        rootInstance: ref(None)
+      onBeginReconcile: be,
+      onEndReconcile: ee,
+      containerNode: rootNode,
+      rootInstance: ref(None),
     };
 
-
     ret;
-
   };
 
   let empty: component = {
@@ -122,26 +123,28 @@ module Make = (ReconcilerImpl: Reconciler) => {
     render: () => (Empty, [], [], __globalContext^),
   };
 
-  type renderFunction = (~children:list(component)=?, componentFunction) => component;
-  let render: renderFunction = (~children:option(list(component))=?, c) => {
-    ignore(children);
-    let ret: component = {
-      element: Component("1"),
-      render: () => {
-        Effects.resetEffects(__globalEffects);
-        let children: list(component) = [c()];
-        let effects = Effects.getEffects(__globalEffects);
-        let renderResult: elementWithChildren = (
-          Component("1"),
-          children,
-          effects,
-          __globalContext^,
-        );
-        renderResult;
-      },
+  type renderFunction =
+    (~children: list(component)=?, componentFunction) => component;
+  let render: renderFunction =
+    (~children: option(list(component))=?, c) => {
+      ignore(children);
+      let ret: component = {
+        element: Component("1"),
+        render: () => {
+          Effects.resetEffects(__globalEffects);
+          let children: list(component) = [c()];
+          let effects = Effects.getEffects(__globalEffects);
+          let renderResult: elementWithChildren = (
+            Component("1"),
+            children,
+            effects,
+            __globalContext^,
+          );
+          renderResult;
+        },
+      };
+      ret;
     };
-    ret;
-  };
 
   module type Component = {
     type t;
@@ -152,11 +155,12 @@ module Make = (ReconcilerImpl: Reconciler) => {
   type func('a) = renderFunction => 'a;
 
   let component = (type a, fn): (module Component with type t = a) => {
-      let boundFunc = fn(render);
-    (module {        
-        type t = a;
-        let createElement = boundFunc;
-    }) 
+    let boundFunc = fn(render);
+    (module
+     {
+       type t = a;
+       let createElement = boundFunc;
+     });
   };
 
   let primitiveComponent = (~children, prim) => {
@@ -205,9 +209,13 @@ module Make = (ReconcilerImpl: Reconciler) => {
     | None => ctx.initialValue
     };
 
-  let useEffect = (~condition:Effects.effectCondition=Effects.Always, e: Effects.effectFunction) => {
-        Effects.addEffect(~condition=condition, __globalEffects, e);
-        ();
+  let useEffect =
+      (
+        ~condition: Effects.effectCondition=Effects.Always,
+        e: Effects.effectFunction,
+      ) => {
+    Effects.addEffect(~condition, __globalEffects, e);
+    ();
   };
 
   let _getEffectsFromInstance = (instance: option(instance)) =>
@@ -239,18 +247,17 @@ module Make = (ReconcilerImpl: Reconciler) => {
       }
     };
 
-  let isInstanceOfComponent = (instance: option(instance), component:component) => {
-    switch(instance) {
+  let isInstanceOfComponent =
+      (instance: option(instance), component: component) =>
+    switch (instance) {
     | None => false
-    | Some(x) => {
-        switch((x.component.element, component.element)) {
-        | (Primitive(a), Primitive(b)) =>  Utility.areConstructorsEqual(a, b)
-        | (Component(a), Component(b)) => a === b
-        | _ => x.component.element == component.element
-        }   
+    | Some(x) =>
+      switch (x.component.element, component.element) {
+      | (Primitive(a), Primitive(b)) => Utility.areConstructorsEqual(a, b)
+      | (Component(a), Component(b)) => a === b
+      | _ => x.component.element == component.element
+      }
     };
-    } 
-  }
 
   /*
    * Instantiate turns a component function into a live instance,
@@ -264,18 +271,18 @@ module Make = (ReconcilerImpl: Reconciler) => {
             context: Context.t,
             container: t,
           ) => {
-
     let previousState = ref([]);
-        
+
     /* Recycle any previous effect instances */
     let previousEffectInstances = _getEffectsFromInstance(previousInstance);
 
-    let isSameInstanceAsBefore = isInstanceOfComponent(previousInstance, component)
+    let isSameInstanceAsBefore =
+      isInstanceOfComponent(previousInstance, component);
 
     if (isSameInstanceAsBefore) {
-        /* Set up state for the component */
-        previousState := _getCurrentStateFromInstance(previousInstance);
-    }
+      /* Set up state for the component */
+      previousState := _getCurrentStateFromInstance(previousInstance);
+    };
 
     let state = ComponentState.create(previousState^);
     /* We hold onto a reference to the component instance - we need to set this _after_ the component is instantiated */
@@ -296,16 +303,18 @@ module Make = (ReconcilerImpl: Reconciler) => {
 
     let newEffectCount = List.length(effects);
 
-    let newEffectInstances = switch (isSameInstanceAsBefore) {
-    | true => {
-        Effects.runEffects(~previousInstances=previousEffectInstances, effects);    
-    }
-    | false => {
-        Effects.drainEffects(previousEffectInstances);
-        let emptyInstances = Effects.createEmptyEffectInstances(newEffectCount);
-        Effects.runEffects(~previousInstances=emptyInstances, effects);
-        }
-    }
+    let newEffectInstances =
+      isSameInstanceAsBefore ?
+        Effects.runEffects(
+          ~previousInstances=previousEffectInstances,
+          effects,
+        ) :
+        {
+          Effects.drainEffects(previousEffectInstances);
+          let emptyInstances =
+            Effects.createEmptyEffectInstances(newEffectCount);
+          Effects.runEffects(~previousInstances=emptyInstances, effects);
+        };
 
     let primitiveInstance =
       switch (element) {
@@ -338,7 +347,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
       effectInstances: newEffectInstances,
       state: newState,
       context: newContext,
-      container: container,
+      container,
     };
 
     /*
@@ -351,7 +360,8 @@ module Make = (ReconcilerImpl: Reconciler) => {
     instance;
   }
   and reconcile = (rootNode, instance, component, context, container) => {
-    let newInstance = instantiate(rootNode, instance, component, context, container);
+    let newInstance =
+      instantiate(rootNode, instance, component, context, container);
 
     let r =
       switch (instance) {
@@ -482,7 +492,8 @@ module Make = (ReconcilerImpl: Reconciler) => {
       | Some(i) =>
         let {rootNode, component, _} = i;
         Event.dispatch(i.container.onBeginReconcile, rootNode);
-        let _ = reconcile(rootNode, Some(i), component, i.context, i.container);
+        let _ =
+          reconcile(rootNode, Some(i), component, i.context, i.container);
         Event.dispatch(i.container.onEndReconcile, rootNode);
         ();
       | _ => print_endline("WARNING: Skipping reconcile!")

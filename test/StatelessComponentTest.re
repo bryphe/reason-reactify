@@ -12,17 +12,14 @@ let createRootNode = () => {children: ref([]), nodeId: 0, nodeType: Root};
 
 let aComponent = (~testVal, ~children, ()) =>
   primitiveComponent(A(testVal), ~children);
-let bComponent = (~children, ()) =>
-  primitiveComponent(B, ~children);
-let cComponent = (~children, ()) =>
-  primitiveComponent(C, ~children);
+let bComponent = (~children, ()) => primitiveComponent(B, ~children);
+let cComponent = (~children, ()) => primitiveComponent(C, ~children);
 
-module ComponentWrappingB = 
-    (val component((render, ~children, ()) => {
-        render(() => {
-            <bComponent />
-        }, ~children);
-    }));
+module ComponentWrappingB = (
+  val component((render, ~children, ()) =>
+        render(() => <bComponent />, ~children)
+      )
+);
 
 test("StatelessComponentTest", () => {
   test("Rendering simple wrapped component", () => {
@@ -32,15 +29,16 @@ test("StatelessComponentTest", () => {
     let expectedStructure: tree(primitives) =
       TreeNode(Root, [TreeLeaf(B)]);
 
-    updateContainer(container, <ComponentWrappingB/>);
+    updateContainer(container, <ComponentWrappingB />);
 
     validateStructure(rootNode, expectedStructure);
   });
 
-  module ComponentWrappingAWithProps =
-      (val component((render, ~children, ~v, ()) => {
-        render(() => {<aComponent testVal=v />}, ~children); 
-      }));
+  module ComponentWrappingAWithProps = (
+    val component((render, ~children, ~v, ()) =>
+          render(() => <aComponent testVal=v />, ~children)
+        )
+  );
 
   test("Rendering wrapped component with prop", () => {
     let rootNode = createRootNode();
@@ -108,11 +106,14 @@ test("StatelessComponentTest", () => {
     validateStructure(rootNode, expectedStructure);
   });
 
-  module ComponentWithWrappedComponents = (val component((render, ~children, ()) => {
-    render(() => {
-        <aComponent testVal=1><ComponentWrappingB /></aComponent>
-    }, ~children);
-  }));
+  module ComponentWithWrappedComponents = (
+    val component((render, ~children, ()) =>
+          render(
+            () => <aComponent testVal=1> <ComponentWrappingB /> </aComponent>,
+            ~children,
+          )
+        )
+  );
 
   test("Rendering wrapped component with wrappedComponent as child prop", () => {
     let rootNode = createRootNode();
@@ -126,9 +127,14 @@ test("StatelessComponentTest", () => {
     validateStructure(rootNode, expectedStructure);
   });
 
-  module ComponentThatRendersChildren = (val component((render, ~children, ()) => {
-    render(() => <aComponent testVal=1>...children</aComponent>, ~children); 
-  }));
+  module ComponentThatRendersChildren = (
+    val component((render, ~children, ()) =>
+          render(
+            () => <aComponent testVal=1> ...children </aComponent>,
+            ~children,
+          )
+        )
+  );
 
   test("Rendering component that renders primitive child", () => {
     let rootNode = createRootNode();
@@ -164,9 +170,15 @@ test("StatelessComponentTest", () => {
     validateStructure(rootNode, expectedStructure);
   });
 
-  module ComponentWithVisibilityToggle = (val component((render, ~visible=true, ~children, ()) => {
-    render(() => visible ? <aComponent testVal=1>...children</aComponent> : TestReact.empty); 
-  }));
+  module ComponentWithVisibilityToggle = (
+    val component((render, ~visible=true, ~children, ()) =>
+          render(() =>
+            visible ?
+              <aComponent testVal=1> ...children </aComponent> :
+              TestReact.empty
+          )
+        )
+  );
 
   test("Test toggling visibility", () => {
     let rootNode = createRootNode();

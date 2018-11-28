@@ -50,11 +50,10 @@ test("Utility", () => {
     let a = () => ();
     /* let b = () => (); */
 
-    let fn = (f) => f;
+    let fn = f => f;
 
     let a0 = fn(a);
     let a1 = fn(a);
-
 
     expect(a0 === a1).toBe(true);
   });

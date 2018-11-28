@@ -12,39 +12,63 @@ let createRootNode = () => {children: ref([]), nodeId: 0, nodeType: Root};
 
 let aComponent = (~testVal, ~children, ()) =>
   primitiveComponent(A(testVal), ~children);
-let bComponent = (~children, ()) =>
-  primitiveComponent(B, ~children);
-let cComponent = (~children, ()) =>
-  primitiveComponent(C, ~children);
+let bComponent = (~children, ()) => primitiveComponent(B, ~children);
+let cComponent = (~children, ()) => primitiveComponent(C, ~children);
 
 let noop = () => ();
 
-module ComponentWithEffectOnMount = (val component((render, ~children, ~functionToCallOnMount, ~functionToCallOnUnmount, ()) => {
-   render(() => {
-      /* Hooks */
-      useEffect(() => {
-        functionToCallOnMount();
-        () => functionToCallOnUnmount();
-      });
-      /* End Hooks */
+module ComponentWithEffectOnMount = (
+  val component(
+        (
+          render,
+          ~children,
+          ~functionToCallOnMount,
+          ~functionToCallOnUnmount,
+          (),
+        ) =>
+        render(
+          () => {
+            /* Hooks */
+            useEffect(() => {
+              functionToCallOnMount();
+              () => functionToCallOnUnmount();
+            });
+            /* End Hooks */
 
-      <bComponent />;
-   }, ~children); 
-}));
+            <bComponent />;
+          },
+          ~children,
+        )
+      )
+);
 
-module ComponentWithEmptyConditionalEffect = (val component((render, ~children, ~functionToCallOnMount, ~functionToCallOnUnmount, ()) => {
-   render(() => {
-      /* Hooks */
-      useEffect(~condition=MountUnmount, () => {
-        functionToCallOnMount();
-        () => functionToCallOnUnmount();
-      });
-      /* End Hooks */
+module ComponentWithEmptyConditionalEffect = (
+  val component(
+        (
+          render,
+          ~children,
+          ~functionToCallOnMount,
+          ~functionToCallOnUnmount,
+          (),
+        ) =>
+        render(
+          () => {
+            /* Hooks */
+            useEffect(
+              ~condition=MountUnmount,
+              () => {
+                functionToCallOnMount();
+                () => functionToCallOnUnmount();
+              },
+            );
+            /* End Hooks */
 
-      <bComponent />;
-    },
-    ~children);
-}));
+            <bComponent />;
+          },
+          ~children,
+        )
+      )
+);
 
 test("useEffect", () => {
   test("useEffect is called on render", () => {

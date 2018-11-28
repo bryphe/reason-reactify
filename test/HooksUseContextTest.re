@@ -14,10 +14,8 @@ let createRootNode = () => {children: ref([]), nodeId: 0, nodeType: Root};
 
 let aComponent = (~testVal, ~children, ()) =>
   primitiveComponent(A(testVal), ~children);
-let bComponent = (~children, ()) =>
-  primitiveComponent(B, ~children);
-let cComponent = (~children, ()) =>
-  primitiveComponent(C, ~children);
+let bComponent = (~children, ()) => primitiveComponent(B, ~children);
+let cComponent = (~children, ()) => primitiveComponent(C, ~children);
 
 test("HooksUseContext", () => {
   test("uses default value", () => {
@@ -26,14 +24,18 @@ test("HooksUseContext", () => {
 
     let testContext = createContext(2);
 
-    module ComponentThatUsesContext = (val component((render, ~children, ()) => {
-        render(() => {
-          let ctx = useContext(testContext);
+    module ComponentThatUsesContext = (
+      val component((render, ~children, ()) =>
+            render(
+              () => {
+                let ctx = useContext(testContext);
 
-          <aComponent testVal=ctx />;
-        },
-        ~children);
-    }));
+                <aComponent testVal=ctx />;
+              },
+              ~children,
+            )
+          )
+    );
 
     let expectedStructure: tree(primitives) =
       TreeNode(Root, [TreeLeaf(A(2))]);
@@ -49,14 +51,18 @@ test("HooksUseContext", () => {
     let testContext = createContext(2);
     let provider = getProvider(testContext);
 
-    module ComponentThatUsesContext = (val component((render, ~children, ()) => {
-        render(() => {
-          let ctx = useContext(testContext);
+    module ComponentThatUsesContext = (
+      val component((render, ~children, ()) =>
+            render(
+              () => {
+                let ctx = useContext(testContext);
 
-          <provider value=9> <aComponent testVal=ctx /> </provider>;
-        },
-        ~children);
-    }));
+                <provider value=9> <aComponent testVal=ctx /> </provider>;
+              },
+              ~children,
+            )
+          )
+    );
 
     let expectedStructure: tree(primitives) =
       TreeNode(Root, [TreeLeaf(A(2))]);
@@ -72,13 +78,17 @@ test("HooksUseContext", () => {
     let testContext = createContext(2);
     let provider = getProvider(testContext);
 
-    module ComponentThatUsesContext = (val component((render, ~children, ()) => {
-        render(() => {
-          let ctx = useContext(testContext);
-          <aComponent testVal=ctx />;
-        },
-        ~children);
-    }));
+    module ComponentThatUsesContext = (
+      val component((render, ~children, ()) =>
+            render(
+              () => {
+                let ctx = useContext(testContext);
+                <aComponent testVal=ctx />;
+              },
+              ~children,
+            )
+          )
+    );
 
     updateContainer(
       container,

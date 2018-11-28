@@ -37,7 +37,12 @@ module type React = {
     | Empty
   and renderedElement =
     | RenderedPrimitive(node)
-  and elementWithChildren = (element, childComponents, Effects.effects, Context.t)
+  and elementWithChildren = (
+    element,
+    childComponents,
+    Effects.effects,
+    Context.t,
+  )
   /*
      A component is our JSX primitive element - just an object
      with a render method.
@@ -45,8 +50,8 @@ module type React = {
      a function of type unit => elementWithChildren ?
    */
   and component = {
-      element,
-      render: unit => elementWithChildren
+    element,
+    render: unit => elementWithChildren,
   }
   and componentFunction = unit => component
   and childComponents = list(component);
@@ -57,7 +62,13 @@ module type React = {
        Container API
    */
   type reconcileNotification = node => unit;
-  let createContainer: (~onBeginReconcile:reconcileNotification=?, ~onEndReconcile:reconcileNotification=?, node) => t;
+  let createContainer:
+    (
+      ~onBeginReconcile: reconcileNotification=?,
+      ~onEndReconcile: reconcileNotification=?,
+      node
+    ) =>
+    t;
   let updateContainer: (t, component) => unit;
 
   /*
@@ -71,16 +82,18 @@ module type React = {
     let createElement: t;
   };
 
-  type renderFunction = (~children:childComponents=?, componentFunction) => component;
+  type renderFunction =
+    (~children: childComponents=?, componentFunction) => component;
   type func('a) = renderFunction => 'a;
 
-  let component: (func('a)) => (module Component with type t = 'a);
+  let component: func('a) => (module Component with type t = 'a);
 
   /*
        Component API
    */
 
-  type providerConstructor('t) = (~children: childComponents, ~value: 't, unit) => component;
+  type providerConstructor('t) =
+    (~children: childComponents, ~value: 't, unit) => component;
   type context('t);
 
   let getProvider: context('t) => providerConstructor('t);
@@ -89,7 +102,8 @@ module type React = {
 
   let empty: component;
 
-  let useEffect: (~condition:Effects.effectCondition=?, Effects.effectFunction) => unit;
+  let useEffect:
+    (~condition: Effects.effectCondition=?, Effects.effectFunction) => unit;
 
   type stateUpdateFunction('t) = 't => unit;
   type stateResult('t) = ('t, stateUpdateFunction('t));
