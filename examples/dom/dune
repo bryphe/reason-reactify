@@ -1,0 +1,6 @@
+(executable
+  (name WebReconciler)
+  (public_name WebReconciler)
+  (libraries reactify)
+  (preprocess (pps js_of_ocaml-ppx))
+)

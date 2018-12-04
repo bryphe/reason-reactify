@@ -8,5 +8,4 @@
 
 Examples:
 - Terminal
-- DOM
 - Test
