@@ -3,3 +3,6 @@
     (public_name Lambda_term)
     (libraries lambda-term reactify))
 
+(alias
+    (name all)
+    (deps (glob_files *.exe)))
