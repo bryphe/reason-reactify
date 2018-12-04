@@ -5,7 +5,7 @@
   "license": "MIT",
   "scripts": {
     "build:js": "esy b dune build test/Test.bc.js",
-    "build:dom": "refmterr dune build ./examples/dom/WebReconciler.bc.js",
+    "build:dom": "esy b refmterr dune build ./examples/dom/WebReconciler.bc.js",
     "test:native": "esy b dune runtest",
     "test:js": "node _build/default/test/Test.bc.js"
   },

@@ -1,3 +1,3 @@
 (alias
     (name examples)
-    (deps (alias examples/all)))
+    (deps (alias examples/lambda-term/all)))
