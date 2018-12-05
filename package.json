@@ -10,8 +10,7 @@
     "test:js": "node _build/default/test/Test.bc.js"
   },
   "esy": {
-    "build": "refmterr dune build -p reactify",
-    "buildsInSource": "_build"
+    "build": "refmterr dune build -p reactify"
   },
   "dependencies": {
     "@opam/dune": "*",
