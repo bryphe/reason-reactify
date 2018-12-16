@@ -51,10 +51,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
   }
   and t = container
   and childInstances = list(instance);
-
-  type stateUpdateFunction('t) = 't => unit;
-  type stateResult('t) = ('t, stateUpdateFunction('t));
-
+  
   type node = ReconcilerImpl.node;
   type primitives = ReconcilerImpl.primitives;
 
@@ -479,18 +476,20 @@ module Make = (ReconcilerImpl: Reconciler) => {
     newChildInstances^;
   };
 
-  let useState = (v: 't) => {
-    let state = __globalState^;
-    let n = ComponentState.popOldState(state, v);
+  let useReducer =
+      (reducer: ('state, 'action) => 'state, initialState: 'state) => {
+    let globalState = __globalState^;
+    let componentState =
+      ComponentState.popOldState(globalState, initialState);
 
-    let updateFunction = ComponentState.pushNewState(state, n);
+    let (getState, updateState) =
+      ComponentState.pushNewState(globalState, componentState);
 
-    /* let updateFunction = (_n) => { (); }; */
+    let currentContext = ComponentState.getCurrentContext(globalState);
 
-    let currentContext = ComponentState.getCurrentContext(state);
-
-    let setState = (context: ref(option(instance)), newVal: 't) => {
-      updateFunction(newVal);
+    let dispatch = (context: ref(option(instance)), action: 'action) => {
+      let newVal = reducer(getState(), action);
+      updateState(newVal);
       switch (context^) {
       | Some(i) =>
         let {rootNode, component, _} = i;
@@ -503,7 +502,20 @@ module Make = (ReconcilerImpl: Reconciler) => {
       };
     };
 
-    (n, setState(currentContext));
+    (componentState, dispatch(currentContext));
+  };
+
+  type useStateAction('a) =
+    | SetState('a);
+  let useStateReducer = (_state, action) =>
+    switch (action) {
+    | SetState(newState) => newState
+    };
+  let useState = initialState => {
+    let (componentState, dispatch) =
+      useReducer(useStateReducer, initialState);
+    let setState = newState => dispatch(SetState(newState));
+    (componentState, setState);
   };
 
   let updateContainer = (container, component) => {

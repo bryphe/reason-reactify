@@ -26,7 +26,7 @@ module Make = (StateContextImpl: StateContext) => {
     mutable newState: HeterogenousMutableList.t,
   };
 
-  type updateFunction('a) = 'a => unit;
+  type getterAndUpdater('a) = (unit => 'a, 'a => unit);
 
   let noneContext = () => ref(None);
 
@@ -51,15 +51,17 @@ module Make = (StateContextImpl: StateContext) => {
       curr;
     };
 
-  let pushNewState: (t, 'a) => updateFunction('a) =
+  let pushNewState: (t, 'a) => getterAndUpdater('a) =
     (state: t, currentVal: 'a) => {
       let updatedVal: ref(Object.t) = ref(Object.to_object(currentVal));
       state.newState = List.append(state.newState, [updatedVal]);
-      let ret: updateFunction('a) =
+      let ret: getterAndUpdater('a) = (
+        () => Object.of_object(updatedVal^),
         (newVal: 'a) => {
           updatedVal := Object.to_object(newVal);
           ();
-        };
+        },
+      );
       ret;
     };
 

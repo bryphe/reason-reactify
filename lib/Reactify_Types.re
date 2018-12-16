@@ -105,7 +105,8 @@ module type React = {
   let useEffect:
     (~condition: Effects.effectCondition=?, Effects.effectFunction) => unit;
 
-  type stateUpdateFunction('t) = 't => unit;
-  type stateResult('t) = ('t, stateUpdateFunction('t));
-  let useState: 't => stateResult('t);
+  let useState: 'state => ('state, 'state => unit);
+
+  let useReducer:
+    (('state, 'action) => 'state, 'state) => ('state, 'action => unit);
 };
