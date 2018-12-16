@@ -115,25 +115,33 @@ let button = (~children, ~text, ~onClick, ()) => {
 
 /* And let's create some custom components! */
 /*
-    IncrementingButton
+    CounterButtons
 
-    This shows how you can use state with a callback from a primitive.
+    This shows how you can use reducers with a callback from a primitive.
  */
 
-module IncrementingButton = (
-  val component((render, ~children, ()) =>
-        render(
-          () => {
-            let (count, setCount) = useState(0);
-            let update = () => setCount(count + 1);
+type action =
+  | Increment
+  | Decrement;
 
-            let text = count > 0 ? "Pressed!" : "Click me";
+let reducer = (state, action) =>
+  switch (action) {
+  | Increment => state + 1
+  | Decrement => state - 1
+  };
 
-            <button text onClick=update />;
-          },
-          ~children,
-        )
-      )
+let renderCounter = () => {
+  let (count, dispatch) = useReducer(reducer, 0);
+
+  <hbox>
+    <button text="Decrement" onClick={() => dispatch(Decrement)} />
+    <label text={"Counter: " ++ string_of_int(count)} />
+    <button text="Increment" onClick={() => dispatch(Increment)} />
+  </hbox>;
+};
+
+module CounterButtons = (
+  val component((render, ~children, ()) => render(renderCounter, ~children))
 );
 /*
     Clock
@@ -175,7 +183,7 @@ let main = () => {
     <vbox>
       <label text="Hello from Reactify!" />
       <Clock />
-      <IncrementingButton />
+      <CounterButtons />
       <button onClick=quit text="Quit" />
     </vbox>;
 

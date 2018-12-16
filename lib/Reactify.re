@@ -51,7 +51,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
   }
   and t = container
   and childInstances = list(instance);
-  
+
   type node = ReconcilerImpl.node;
   type primitives = ReconcilerImpl.primitives;
 
@@ -379,7 +379,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
             /* Only both replacing node if the primitives are different */
             switch (newInstance.component.element, i.component.element) {
             | (Primitive(newPrim), Primitive(oldPrim)) =>
-              if (oldPrim != newPrim) {
+              if (oldPrim !== newPrim) {
                 /* Check if the primitive type is the same - if it is, we can simply update the node */
                 /* If not, we'll replace the node */
                 if (Utility.areConstructorsEqual(oldPrim, newPrim)) {
