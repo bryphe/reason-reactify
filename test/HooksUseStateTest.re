@@ -5,6 +5,8 @@ open TestReconciler;
 open TestUtility;
 
 module Event = Reactify.Event;
+module Effects = Reactify.Effects;
+
 
 /* Use our Reconciler to create our own instance */
 module TestReact = Reactify.Make(TestReconciler);
@@ -51,19 +53,19 @@ test("useState", () => {
   });
 
   module ComponentThatUpdatesState = (
-    val component((render, ~children, ~event: Event.t(int), ()) =>
+    val component((render, ~condition=Effects.Always, ~children, ~event: Event.t(int), ()) =>
           render(
             () => {
               /* Hooks */
               let (s, setS) = useState(2);
               /* End hooks */
 
-              useEffect(() => {
+              useEffect(~condition, () => {
                 let unsubscribe = Event.subscribe(event, v => setS(v));
                 () => unsubscribe();
               });
 
-              <aComponent testVal=s />;
+              <aComponent testVal=s/>;
             },
             ~children,
           )
@@ -157,13 +159,13 @@ test("useState", () => {
   });
 
   module ComponentThatUpdatesStateAndRendersChildren = (
-    val component((render, ~children, ~event: Event.t(int), ()) =>
+    val component((render, ~condition=Effects.Always, ~children, ~event: Event.t(int), ()) =>
           render(
             () => {
               /* Hooks */
               let (s, setS) = useState(2);
 
-              useEffect(() => {
+              useEffect(~condition, () => {
                 let unsubscribe = Event.subscribe(event, v => setS(v));
                 () => unsubscribe();
               });
@@ -176,7 +178,7 @@ test("useState", () => {
         )
   );
 
-  test("nested state works as expected", () => {
+  test("nested state works", () => {
     let rootNode = createRootNode();
     let container = createContainer(rootNode);
 
@@ -187,6 +189,40 @@ test("useState", () => {
       container,
       <ComponentThatUpdatesStateAndRendersChildren event=outerEvent>
         <ComponentThatUpdatesState event=innerEvent />
+      </ComponentThatUpdatesStateAndRendersChildren>,
+    );
+
+    let expectedStructure: tree(primitives) =
+      TreeNode(Root, [TreeNode(A(2), [TreeLeaf(A(2))])]);
+    validateStructure(rootNode, expectedStructure);
+
+    Event.dispatch(outerEvent, 5);
+    let expectedStructure: tree(primitives) =
+      TreeNode(Root, [TreeNode(A(5), [TreeLeaf(A(2))])]);
+    validateStructure(rootNode, expectedStructure);
+
+    Event.dispatch(innerEvent, 6);
+    let expectedStructure: tree(primitives) =
+      TreeNode(Root, [TreeNode(A(5), [TreeLeaf(A(6))])]);
+    validateStructure(rootNode, expectedStructure);
+
+    Event.dispatch(outerEvent, 7);
+    let expectedStructure: tree(primitives) =
+      TreeNode(Root, [TreeNode(A(7), [TreeLeaf(A(6))])]);
+    validateStructure(rootNode, expectedStructure);
+  });
+
+  test("regression test: nested state w/ long-lived handle to setState", () => {
+    let rootNode = createRootNode();
+    let container = createContainer(rootNode);
+
+    let outerEvent = Event.create();
+    let innerEvent = Event.create();
+
+    updateContainer(
+      container,
+      <ComponentThatUpdatesStateAndRendersChildren event=outerEvent>
+        <ComponentThatUpdatesState condition=Effects.MountUnmount event=innerEvent />
       </ComponentThatUpdatesStateAndRendersChildren>,
     );
 

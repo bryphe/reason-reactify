@@ -518,6 +518,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
 };
 
 module State = State;
+module Effects = Effects;
 module Event = Event;
 module Utility = Utility;
 module Object = Object;
