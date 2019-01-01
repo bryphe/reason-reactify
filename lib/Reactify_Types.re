@@ -30,9 +30,8 @@ module type Reconciler = {
 module type React = {
   type primitives;
   type node;
-  type hook('t);
   type state('s);
-  type reducer('s, 'a);
+  type reducer('r);
   type effect;
   type context('t);
 
@@ -45,7 +44,9 @@ module type React = {
     | Component(ComponentId.t, render)
     | Provider(render)
     | Empty(render)
-  and elementHook = (hook(unit), element);
+  and hook('t) =
+    | Hook(element, 't)
+  and emptyHook = hook(unit);
 
   type t;
 
@@ -60,13 +61,13 @@ module type React = {
       node
     ) =>
     t;
-  let updateContainer: (t, elementHook) => unit;
+  let updateContainer: (t, emptyHook) => unit;
 
   /*
        Component creation API
    */
   let primitiveComponent:
-    (~children: list(elementHook), primitives) => elementHook;
+    (~children: list(emptyHook), primitives) => emptyHook;
 
   module type Component = {
     type hooks;
@@ -77,7 +78,8 @@ module type React = {
   let createComponent:
     (
       (
-        (unit => ('h, element), ~children: list(elementHook)) => elementHook
+        (unit => hook('h), ~children: list(emptyHook)) =>
+        emptyHook
       ) =>
       'c
     ) =>
@@ -88,33 +90,35 @@ module type React = {
    */
 
   type providerConstructor('t) =
-    (~children: list(elementHook), ~value: 't, unit) => elementHook;
+    (~children: list(emptyHook), ~value: 't, unit) =>
+    emptyHook;
   type contextValue('t);
 
   let getProvider: contextValue('t) => providerConstructor('t);
   let createContext: 't => contextValue('t);
   let useContext:
-    (contextValue('t), 't => (hook('a), 'b)) => (hook(('a, context('t))), 'b);
+    (contextValue('t), 't => hook('a)) =>
+    (hook(('a, context('t))));
 
-  let empty: elementHook;
+  let empty: emptyHook;
 
   let useEffect:
     (
       ~condition: Effects.effectCondition=?,
       Effects.effectFunction,
-      unit => (hook('a), 'b)
+      unit => hook('a)
     ) =>
-    (hook(('a, effect)), 'b);
+    hook(('a, effect));
 
   let useState:
-    ('state, (('state, 'state => unit)) => (hook('a), 'b)) =>
-    (hook(('a, state('state))), 'b);
+    ('state, (('state, 'state => unit)) => hook('a)) =>
+    hook(('a, state('state)));
 
   let useReducer:
     (
       ('state, 'action) => 'state,
       'state,
-      (('state, 'action => unit)) => (hook('a), 'b)
+      (('state, 'action => unit)) => hook('a)
     ) =>
-    (hook(('a, reducer('state, 'action))), 'b);
+    hook(('a, reducer(('state, 'action) => 'state)));
 };
