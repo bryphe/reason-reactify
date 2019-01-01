@@ -70,6 +70,36 @@ test("useState", () => {
         )
   );
 
+  module ComponentThatUpdatesMultipleStates = (
+    val component((render, ~children, ~event: Event.t((int, int, int)), ()) =>
+          render(
+            () => {
+              /* Hooks */
+              let (s1, setS1) = useState(1);
+              let (s2, setS2) = useState(2);
+              let (s3, setS3) = useState(3);
+              /* End hooks */
+
+              useEffect(() => {
+                let unsubscribe = Event.subscribe(event, ((v1, v2, v3)) => {
+                  setS1(v1);  
+                  setS2(v2);
+                  setS3(v3);
+                });
+                () => unsubscribe();
+              });
+
+              <bComponent>
+                  <aComponent testVal=s1 />
+                  <aComponent testVal=s2 />
+                  <aComponent testVal=s3 />
+              </bComponent>
+            },
+            ~children,
+          )
+        )
+  );
+
   test("useState updates state with set function", () => {
     let rootNode = createRootNode();
 
@@ -112,7 +142,6 @@ test("useState", () => {
 
   test("useState set state persists across renders", () => {
     let rootNode = createRootNode();
-
     let container = createContainer(rootNode);
 
     let event: Event.t(int) = Event.create();
@@ -120,15 +149,42 @@ test("useState", () => {
     updateContainer(container, <ComponentThatUpdatesState event />);
 
     Event.dispatch(event, 5);
-
     let expectedStructure: tree(primitives) =
       TreeNode(Root, [TreeLeaf(A(5))]);
     validateStructure(rootNode, expectedStructure);
 
-    updateContainer(container, <ComponentThatUpdatesState event />);
+    Event.dispatch(event, 6);
+    let expectedStructure: tree(primitives) =
+      TreeNode(Root, [TreeLeaf(A(6))]);
+    validateStructure(rootNode, expectedStructure);
+
+    Event.dispatch(event, 7);
+    let expectedStructure: tree(primitives) =
+      TreeNode(Root, [TreeLeaf(A(7))]);
+    validateStructure(rootNode, expectedStructure);
+  });
+
+  test("multiple setState calls", () => {
+    let rootNode = createRootNode();
+
+    let container = createContainer(rootNode);
+
+    let event: Event.t((int, int, int)) = Event.create();
+
+    updateContainer(container, <ComponentThatUpdatesMultipleStates event />);
+    let expectedStructure: tree(primitives) =
+      TreeNode(Root, [TreeNode(B, [TreeLeaf(A(1)), TreeLeaf(A(2)), TreeLeaf(A(3))])]);
+    validateStructure(rootNode, expectedStructure);
+
+    Event.dispatch(event, (10, 11, 12));
 
     let expectedStructure: tree(primitives) =
-      TreeNode(Root, [TreeLeaf(A(5))]);
+      TreeNode(Root, [TreeNode(B, [TreeLeaf(A(10)), TreeLeaf(A(11)), TreeLeaf(A(12))])]);
+    validateStructure(rootNode, expectedStructure);
+
+    updateContainer(container, <ComponentThatUpdatesMultipleStates event />);
+    let expectedStructure: tree(primitives) =
+      TreeNode(Root, [TreeNode(B, [TreeLeaf(A(10)), TreeLeaf(A(11)), TreeLeaf(A(12))])]);
     validateStructure(rootNode, expectedStructure);
   });
 
