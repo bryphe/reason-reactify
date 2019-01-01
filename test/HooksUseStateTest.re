@@ -142,6 +142,7 @@ test("useState", () => {
 
   test("useState set state persists across renders", () => {
     let rootNode = createRootNode();
+
     let container = createContainer(rootNode);
 
     let event: Event.t(int) = Event.create();
@@ -149,18 +150,15 @@ test("useState", () => {
     updateContainer(container, <ComponentThatUpdatesState event />);
 
     Event.dispatch(event, 5);
+
     let expectedStructure: tree(primitives) =
       TreeNode(Root, [TreeLeaf(A(5))]);
     validateStructure(rootNode, expectedStructure);
 
-    Event.dispatch(event, 6);
-    let expectedStructure: tree(primitives) =
-      TreeNode(Root, [TreeLeaf(A(6))]);
-    validateStructure(rootNode, expectedStructure);
+    updateContainer(container, <ComponentThatUpdatesState event />);
 
-    Event.dispatch(event, 7);
     let expectedStructure: tree(primitives) =
-      TreeNode(Root, [TreeLeaf(A(7))]);
+      TreeNode(Root, [TreeLeaf(A(5))]);
     validateStructure(rootNode, expectedStructure);
   });
 
