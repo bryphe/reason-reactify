@@ -131,7 +131,7 @@ let reducer = (state, action) =>
   };
 
 let renderCounter = () =>
-  useReducer(reducer, 0, ((count, dispatch)) =>
+  useReducerExperimental(reducer, 0, ((count, dispatch)) =>
     <hbox>
       <button text="Decrement" onClick={() => dispatch(Decrement)} />
       <label text={"Counter: " ++ string_of_int(count)} />
@@ -154,8 +154,8 @@ module Clock = (
   val createComponent((render, ~children, ()) =>
         render(
           () =>
-            useState(0., ((time, setTime)) =>
-              useEffect(
+            useStateExperimental(0., ((time, setTime)) =>
+              useEffectExperimental(
                 () => {
                   let evt =
                     Lwt_engine.on_timer(1.0, true, _ => setTime(Unix.time()));

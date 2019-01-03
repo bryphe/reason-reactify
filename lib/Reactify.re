@@ -161,7 +161,8 @@ module Make = (ReconcilerImpl: Reconciler) => {
       (
         type c,
         type h,
-        create: ((unit => hook(h), ~children: list(emptyHook)) => emptyHook) => c,
+        create:
+          ((unit => hook(h), ~children: list(emptyHook)) => emptyHook) => c,
       )
       : (module Component with type createElement = c and type hooks = h) => {
     let id = ComponentId.newId(_uniqueIdScope);
@@ -173,6 +174,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
        let createElement = boundFunc;
      });
   };
+  let component = createComponent;
 
   let primitiveComponent = (~children, prim) => {
     let comp: emptyHook =
@@ -219,12 +221,17 @@ module Make = (ReconcilerImpl: Reconciler) => {
     provider;
   };
 
-  let useContext = (ctx: contextValue('t), continuation) => {
+  let useContext = (ctx: contextValue('t)) => {
     let value =
       switch (Context.get(__globalContext^, ctx.id)) {
       | Some(x) => Object.of_object(x)
       | None => ctx.initialValue
       };
+    value;
+  };
+
+  let useContextExperimental = (ctx: contextValue('t), continuation) => {
+    let value = useContext(ctx);
     continuation(value) |> addContext(~value);
   };
 
@@ -232,9 +239,16 @@ module Make = (ReconcilerImpl: Reconciler) => {
       (
         ~condition: Effects.effectCondition=Effects.Always,
         e: Effects.effectFunction,
+      ) =>
+    Effects.addEffect(~condition, __globalEffects, e);
+
+  let useEffectExperimental =
+      (
+        ~condition: Effects.effectCondition=Effects.Always,
+        e: Effects.effectFunction,
         continuation,
       ) => {
-    Effects.addEffect(~condition, __globalEffects, e);
+    useEffect(~condition, e);
     continuation() |> addEffect;
   };
 
@@ -502,12 +516,8 @@ module Make = (ReconcilerImpl: Reconciler) => {
     newChildInstances^;
   };
 
-  let _useReducer =
-      (
-        reducer: ('state, 'action) => 'state,
-        initialState: 'state,
-        continuation,
-      ) => {
+  let useReducer =
+      (reducer: ('state, 'action) => 'state, initialState: 'state) => {
     let globalState = __globalState^;
     let componentState =
       ComponentState.popOldState(globalState, initialState);
@@ -532,16 +542,25 @@ module Make = (ReconcilerImpl: Reconciler) => {
       };
     };
 
-    continuation((componentState, dispatch(currentContext)));
+    (componentState, dispatch(currentContext));
   };
+
+  let _useReducerExperimental =
+      (
+        reducer: ('state, 'action) => 'state,
+        initialState: 'state,
+        continuation,
+      ) =>
+    continuation(useReducer(reducer, initialState));
 
   /*
      There's an internal and a public version of `useReducer`. The internal version,
      which has no "hooks types propagation", allows to keep the types in `useState`
      (which reuses `useReducer`) simpler
    */
-  let useReducer = (reducer, initialState, continuation) =>
-    _useReducer(reducer, initialState, continuation) |> addReducer(~reducer);
+  let useReducerExperimental = (reducer, initialState, continuation) =>
+    _useReducerExperimental(reducer, initialState, continuation)
+    |> addReducer(~reducer);
 
   type useStateAction('a) =
     | SetState('a);
@@ -549,8 +568,16 @@ module Make = (ReconcilerImpl: Reconciler) => {
     switch (action) {
     | SetState(newState) => newState
     };
-  let useState = (initialState, continuation) =>
-    _useReducer(
+
+  let useState = initialState => {
+    let (componentState, dispatch) =
+      useReducer(useStateReducer, initialState);
+    let setState = newState => dispatch(SetState(newState));
+    (componentState, setState);
+  };
+
+  let useStateExperimental = (initialState, continuation) =>
+    _useReducerExperimental(
       useStateReducer,
       initialState,
       ((componentState, dispatch)) => {

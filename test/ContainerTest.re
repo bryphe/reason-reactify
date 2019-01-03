@@ -40,11 +40,11 @@ test("Container", () => {
     val createComponent((render, ~children, ~event: Event.t(int), ()) =>
           render(
             () =>
-              useState(
+              useStateExperimental(
                 2,
                 ((s, setS)) => {
                   print_endline("Value: " ++ string_of_int(s));
-                  useEffect(
+                  useEffectExperimental(
                     () => {
                       let unsubscribe = Event.subscribe(event, v => setS(v));
                       () => unsubscribe();

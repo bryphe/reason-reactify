@@ -76,13 +76,10 @@ module type React = {
   };
 
   let createComponent:
-    (
-      (
-        (unit => hook('h), ~children: list(emptyHook)) =>
-        emptyHook
-      ) =>
-      'c
-    ) =>
+    (((unit => hook('h), ~children: list(emptyHook)) => emptyHook) => 'c) =>
+    (module Component with type createElement = 'c and type hooks = 'h);
+  let component:
+    (((unit => hook('h), ~children: list(emptyHook)) => emptyHook) => 'c) =>
     (module Component with type createElement = 'c and type hooks = 'h);
 
   /*
@@ -90,19 +87,21 @@ module type React = {
    */
 
   type providerConstructor('t) =
-    (~children: list(emptyHook), ~value: 't, unit) =>
-    emptyHook;
+    (~children: list(emptyHook), ~value: 't, unit) => emptyHook;
   type contextValue('t);
 
   let getProvider: contextValue('t) => providerConstructor('t);
   let createContext: 't => contextValue('t);
-  let useContext:
-    (contextValue('t), 't => hook('a)) =>
-    (hook(('a, context('t))));
+  let useContext: contextValue('t) => 't;
+  let useContextExperimental:
+    (contextValue('t), 't => hook('a)) => hook(('a, context('t)));
 
   let empty: emptyHook;
 
   let useEffect:
+    (~condition: Effects.effectCondition=?, Effects.effectFunction) => unit;
+
+  let useEffectExperimental:
     (
       ~condition: Effects.effectCondition=?,
       Effects.effectFunction,
@@ -110,11 +109,16 @@ module type React = {
     ) =>
     hook(('a, effect));
 
-  let useState:
+  let useState: 'state => ('state, 'state => unit);
+
+  let useStateExperimental:
     ('state, (('state, 'state => unit)) => hook('a)) =>
     hook(('a, state('state)));
 
   let useReducer:
+    (('state, 'action) => 'state, 'state) => ('state, 'action => unit);
+
+  let useReducerExperimental:
     (
       ('state, 'action) => 'state,
       'state,

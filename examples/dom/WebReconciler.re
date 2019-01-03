@@ -153,7 +153,7 @@ let reducer = (state, action) =>
   };
 
 let renderCounter = () =>
-  useReducer(reducer, 0, ((count, dispatch)) =>
+  useReducerExperimental(reducer, 0, ((count, dispatch)) =>
     <view>
       <button title="Decrement" onPress={() => dispatch(Decrement)} />
       <text> {"Counter: " ++ str(count)} </text>

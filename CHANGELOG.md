@@ -1,8 +1,8 @@
 ## Next release
 
-## 3.0.0
+## 2.2.0
 
-- Continuation-passing style API for hooks: [43](https://github.com/revery-ui/reason-reactify/pull/43/)
+- Experimental continuation-passing style API for hooks: [43](https://github.com/revery-ui/reason-reactify/pull/43/) and [49](https://github.com/revery-ui/reason-reactify/pull/49/)
 
 ## 2.0.0
 

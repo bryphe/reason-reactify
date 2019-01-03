@@ -27,7 +27,7 @@ test("HooksUseContext", () => {
     module ComponentThatUsesContext = (
       val createComponent((render, ~children, ()) =>
             render(
-              () => useContext(testContext, ctx => <aComponent testVal=ctx />),
+              () => useContextExperimental(testContext, ctx => <aComponent testVal=ctx />),
               ~children,
             )
           )
@@ -51,7 +51,7 @@ test("HooksUseContext", () => {
       val createComponent((render, ~children, ()) =>
             render(
               () =>
-                useContext(testContext, ctx =>
+                useContextExperimental(testContext, ctx =>
                   <provider value=9> <aComponent testVal=ctx /> </provider>
                 ),
               ~children,
@@ -76,7 +76,7 @@ test("HooksUseContext", () => {
     module ComponentThatUsesContext = (
       val createComponent((render, ~children, ()) =>
             render(
-              () => useContext(testContext, ctx => <aComponent testVal=ctx />),
+              () => useContextExperimental(testContext, ctx => <aComponent testVal=ctx />),
               ~children,
             )
           )

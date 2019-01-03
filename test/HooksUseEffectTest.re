@@ -28,7 +28,7 @@ module ComponentWithEffectOnMount = (
         ) =>
         render(
           () =>
-            useEffect(
+            useEffectExperimental(
               () => {
                 functionToCallOnMount();
                 () => functionToCallOnUnmount();
@@ -52,7 +52,7 @@ module ComponentWithEmptyConditionalEffect = (
         render(
           () =>
             /* Hooks */
-            useEffect(
+            useEffectExperimental(
               ~condition=MountUnmount,
               () => {
                 functionToCallOnMount();
