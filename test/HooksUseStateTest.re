@@ -20,7 +20,10 @@ let cComponent = (~children, ()) => primitiveComponent(C, ~children);
 module ComponentWithState = (
   val createComponent((render, ~children, ()) =>
         render(
-          () => useStateExperimental(2, ((s, _setS)) => <aComponent testVal=s />),
+          () =>
+            useStateExperimental(2, ((s, _setS)) =>
+              <aComponent testVal=s />
+            ),
           ~children,
         )
       )
@@ -65,30 +68,33 @@ test("useState", () => {
   module ComponentThatUpdatesMultipleStates = (
     val component((render, ~children, ~event: Event.t((int, int, int)), ()) =>
           render(
-            () => {
-              useStateExperimental(1, ((s1, setS1)) => {
-              useStateExperimental(2, ((s2, setS2)) => {
-              useStateExperimental(3, ((s3, setS3)) => {
-
-              useEffectExperimental(() => {
-                let unsubscribe = Event.subscribe(event, ((v1, v2, v3)) => {
-                  setS1(v1);  
-                  setS2(v2);
-                  setS3(v3);
-                });
-                () => unsubscribe();
-              }, () => {
-                  <bComponent>
-                      <aComponent testVal=s1 />
-                      <aComponent testVal=s2 />
-                      <aComponent testVal=s3 />
-                  </bComponent>
-              });
-
-              })  ;
-              });   
-            });
-            },
+            () =>
+              useStateExperimental(1, ((s1, setS1)) =>
+                useStateExperimental(2, ((s2, setS2)) =>
+                  useStateExperimental(3, ((s3, setS3)) =>
+                    useEffectExperimental(
+                      () => {
+                        let unsubscribe =
+                          Event.subscribe(
+                            event,
+                            ((v1, v2, v3)) => {
+                              setS1(v1);
+                              setS2(v2);
+                              setS3(v3);
+                            },
+                          );
+                        () => unsubscribe();
+                      },
+                      () =>
+                        <bComponent>
+                          <aComponent testVal=s1 />
+                          <aComponent testVal=s2 />
+                          <aComponent testVal=s3 />
+                        </bComponent>,
+                    )
+                  )
+                )
+              ),
             ~children,
           )
         )
@@ -165,18 +171,39 @@ test("useState", () => {
 
     updateContainer(container, <ComponentThatUpdatesMultipleStates event />);
     let expectedStructure: tree(primitives) =
-      TreeNode(Root, [TreeNode(B, [TreeLeaf(A(1)), TreeLeaf(A(2)), TreeLeaf(A(3))])]);
+      TreeNode(
+        Root,
+        [
+          TreeNode(B, [TreeLeaf(A(1)), TreeLeaf(A(2)), TreeLeaf(A(3))]),
+        ],
+      );
     validateStructure(rootNode, expectedStructure);
 
     Event.dispatch(event, (10, 11, 12));
 
     let expectedStructure: tree(primitives) =
-      TreeNode(Root, [TreeNode(B, [TreeLeaf(A(10)), TreeLeaf(A(11)), TreeLeaf(A(12))])]);
+      TreeNode(
+        Root,
+        [
+          TreeNode(
+            B,
+            [TreeLeaf(A(10)), TreeLeaf(A(11)), TreeLeaf(A(12))],
+          ),
+        ],
+      );
     validateStructure(rootNode, expectedStructure);
 
     updateContainer(container, <ComponentThatUpdatesMultipleStates event />);
     let expectedStructure: tree(primitives) =
-      TreeNode(Root, [TreeNode(B, [TreeLeaf(A(10)), TreeLeaf(A(11)), TreeLeaf(A(12))])]);
+      TreeNode(
+        Root,
+        [
+          TreeNode(
+            B,
+            [TreeLeaf(A(10)), TreeLeaf(A(11)), TreeLeaf(A(12))],
+          ),
+        ],
+      );
     validateStructure(rootNode, expectedStructure);
   });
 
