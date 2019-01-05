@@ -66,26 +66,28 @@ test("useState", () => {
     val component((render, ~children, ~event: Event.t((int, int, int)), ()) =>
           render(
             () => {
-              /* Hooks */
-              let (s1, setS1) = useState(1);
-              let (s2, setS2) = useState(2);
-              let (s3, setS3) = useState(3);
-              /* End hooks */
+              useStateExperimental(1, ((s1, setS1)) => {
+              useStateExperimental(2, ((s2, setS2)) => {
+              useStateExperimental(3, ((s3, setS3)) => {
 
-              useEffect(() => {
+              useEffectExperimental(() => {
                 let unsubscribe = Event.subscribe(event, ((v1, v2, v3)) => {
                   setS1(v1);  
                   setS2(v2);
                   setS3(v3);
                 });
                 () => unsubscribe();
+              }, () => {
+                  <bComponent>
+                      <aComponent testVal=s1 />
+                      <aComponent testVal=s2 />
+                      <aComponent testVal=s3 />
+                  </bComponent>
               });
 
-              <bComponent>
-                  <aComponent testVal=s1 />
-                  <aComponent testVal=s2 />
-                  <aComponent testVal=s3 />
-              </bComponent>
+              })  ;
+              });   
+            });
             },
             ~children,
           )
