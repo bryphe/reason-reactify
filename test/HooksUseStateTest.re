@@ -207,6 +207,82 @@ test("useState", () => {
     validateStructure(rootNode, expectedStructure);
   });
 
+  test("nested useState set state persists across renders", () => {
+    let rootNode = createRootNode();
+
+    let container = createContainer(rootNode);
+
+    let event: Event.t(int) = Event.create();
+
+    updateContainer(
+      container,
+      <bComponent> <ComponentThatUpdatesState event /> </bComponent>,
+    );
+
+    Event.dispatch(event, 5);
+
+    let expectedStructure: tree(primitives) =
+      TreeNode(Root, [TreeNode(B, [TreeLeaf(A(5))])]);
+    validateStructure(rootNode, expectedStructure);
+
+    updateContainer(
+      container,
+      <bComponent> <ComponentThatUpdatesState event /> </bComponent>,
+    );
+
+    let expectedStructure: tree(primitives) =
+      TreeNode(Root, [TreeNode(B, [TreeLeaf(A(5))])]);
+    validateStructure(rootNode, expectedStructure);
+  });
+
+  test(
+    "nested useState setState for multiple components persists across renders",
+    () => {
+    let rootNode = createRootNode();
+
+    let container = createContainer(rootNode);
+
+    let event1: Event.t(int) = Event.create();
+    let event2: Event.t(int) = Event.create();
+
+    updateContainer(
+      container,
+      <bComponent>
+        <ComponentThatUpdatesState event=event1 />
+        <ComponentThatUpdatesState event=event2 />
+      </bComponent>,
+    );
+
+    Event.dispatch(event1, 5);
+    Event.dispatch(event2, 6);
+
+    let expectedStructure: tree(primitives) =
+      TreeNode(Root, [TreeNode(B, [TreeLeaf(A(5)), TreeLeaf(A(6))])]);
+    validateStructure(rootNode, expectedStructure);
+
+    updateContainer(
+      container,
+      <bComponent>
+        <ComponentThatUpdatesState event=event1 />
+        <ComponentThatUpdatesState event=event2 />
+      </bComponent>,
+    );
+
+    let expectedStructure: tree(primitives) =
+      TreeNode(Root, [TreeNode(B, [TreeLeaf(A(5)), TreeLeaf(A(6))])]);
+    validateStructure(rootNode, expectedStructure);
+
+    Event.dispatch(event1, 3);
+    let expectedStructure: tree(primitives) =
+      TreeNode(Root, [TreeNode(B, [TreeLeaf(A(3)), TreeLeaf(A(6))])]);
+    validateStructure(rootNode, expectedStructure);
+
+    Event.dispatch(event2, 4);
+    let expectedStructure: tree(primitives) =
+      TreeNode(Root, [TreeNode(B, [TreeLeaf(A(3)), TreeLeaf(A(4))])]);
+    validateStructure(rootNode, expectedStructure);
+  });
+
   test("useState can update multiple times", () => {
     let rootNode = createRootNode();
     let container = createContainer(rootNode);
