@@ -27,15 +27,12 @@ let reducer = (state, action) =>
   };
 
 module ComponentWithState = (
-  val component((render, ~children, ()) =>
+  val createComponent((render, ~children, ()) =>
         render(
-          () => {
-            /* Hooks */
-            let (s, _dispatch) = useReducer(reducer, 2);
-            /* End hooks */
-
-            <aComponent testVal=s />;
-          },
+          () =>
+            useReducerExperimental(reducer, 2, ((s, _dispatch)) =>
+              <aComponent testVal=s />
+            ),
           ~children,
         )
       )
@@ -60,22 +57,20 @@ test("useReducer", () => {
   });
 
   module ComponentThatDispatchesIncreaseAction = (
-    val component(
+    val createComponent(
           (render, ~children, ~event: Event.t(unit), ~initialValue: int, ()) =>
           render(
-            () => {
-              /* Hooks */
-              let (s, dispatch) = useReducer(reducer, initialValue);
-              /* End hooks */
-
-              useEffect(() => {
-                let unsubscribe =
-                  Event.subscribe(event, () => dispatch(Increase));
-                () => unsubscribe();
-              });
-
-              <aComponent testVal=s />;
-            },
+            () =>
+              useReducerExperimental(reducer, initialValue, ((s, dispatch)) =>
+                useEffectExperimental(
+                  () => {
+                    let unsubscribe =
+                      Event.subscribe(event, () => dispatch(Increase));
+                    () => unsubscribe();
+                  },
+                  () => <aComponent testVal=s />,
+                )
+              ),
             ~children,
           )
         )
@@ -183,22 +178,20 @@ test("useReducer", () => {
   });
 
   module ComponentThatDispatchesIncreaseActionAndRendersChildren = (
-    val component(
+    val createComponent(
           (render, ~children, ~event: Event.t(unit), ~initialValue: int, ()) =>
           render(
-            () => {
-              /* Hooks */
-              let (s, dispatch) = useReducer(reducer, initialValue);
-
-              useEffect(() => {
-                let unsubscribe =
-                  Event.subscribe(event, () => dispatch(Increase));
-                () => unsubscribe();
-              });
-              /* End Hooks */
-
-              <aComponent testVal=s> ...children </aComponent>;
-            },
+            () =>
+              useReducerExperimental(reducer, initialValue, ((s, dispatch)) =>
+                useEffectExperimental(
+                  () => {
+                    let unsubscribe =
+                      Event.subscribe(event, () => dispatch(Increase));
+                    () => unsubscribe();
+                  },
+                  () => <aComponent testVal=s> ...children </aComponent>,
+                )
+              ),
             ~children,
           )
         )
@@ -241,5 +234,4 @@ test("useReducer", () => {
       TreeNode(Root, [TreeNode(A(4), [TreeLeaf(A(13))])]);
     validateStructure(rootNode, expectedStructure);
   });
-
 });

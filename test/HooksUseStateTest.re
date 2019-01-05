@@ -18,15 +18,9 @@ let bComponent = (~children, ()) => primitiveComponent(B, ~children);
 let cComponent = (~children, ()) => primitiveComponent(C, ~children);
 
 module ComponentWithState = (
-  val component((render, ~children, ()) =>
+  val createComponent((render, ~children, ()) =>
         render(
-          () => {
-            /* Hooks */
-            let (s, _setS) = useState(2);
-            /* End hooks */
-
-            <aComponent testVal=s />;
-          },
+          () => useStateExperimental(2, ((s, _setS)) => <aComponent testVal=s />),
           ~children,
         )
       )
@@ -51,20 +45,18 @@ test("useState", () => {
   });
 
   module ComponentThatUpdatesState = (
-    val component((render, ~children, ~event: Event.t(int), ()) =>
+    val createComponent((render, ~children, ~event: Event.t(int), ()) =>
           render(
-            () => {
-              /* Hooks */
-              let (s, setS) = useState(2);
-              /* End hooks */
-
-              useEffect(() => {
-                let unsubscribe = Event.subscribe(event, v => setS(v));
-                () => unsubscribe();
-              });
-
-              <aComponent testVal=s />;
-            },
+            () =>
+              useStateExperimental(2, ((s, setS)) =>
+                useEffectExperimental(
+                  () => {
+                    let unsubscribe = Event.subscribe(event, v => setS(v));
+                    () => unsubscribe();
+                  },
+                  () => <aComponent testVal=s />,
+                )
+              ),
             ~children,
           )
         )
@@ -219,20 +211,18 @@ test("useState", () => {
   });
 
   module ComponentThatUpdatesStateAndRendersChildren = (
-    val component((render, ~children, ~event: Event.t(int), ()) =>
+    val createComponent((render, ~children, ~event: Event.t(int), ()) =>
           render(
-            () => {
-              /* Hooks */
-              let (s, setS) = useState(2);
-
-              useEffect(() => {
-                let unsubscribe = Event.subscribe(event, v => setS(v));
-                () => unsubscribe();
-              });
-              /* End Hooks */
-
-              <aComponent testVal=s> ...children </aComponent>;
-            },
+            () =>
+              useStateExperimental(2, ((s, setS)) =>
+                useEffectExperimental(
+                  () => {
+                    let unsubscribe = Event.subscribe(event, v => setS(v));
+                    () => unsubscribe();
+                  },
+                  () => <aComponent testVal=s> ...children </aComponent>,
+                )
+              ),
             ~children,
           )
         )
@@ -273,24 +263,25 @@ test("useState", () => {
   });
 
   module ComponentThatWrapsEitherPrimitiveOrComponent = (
-    val component((render, ~children, ~event: Event.t(renderOption), ()) =>
+    val createComponent(
+          (render, ~children, ~event: Event.t(renderOption), ()) =>
           render(
-            () => {
+            () =>
               /* Hooks */
-              let (s, setS) = useState(RenderAComponentWithState);
-
-              useEffect(() => {
-                let unsubscribe = Event.subscribe(event, v => setS(v));
-                () => unsubscribe();
-              });
-              /* End Hook */
-
-              switch (s) {
-              /* | Nothing => () */
-              | RenderAComponentWithState => <ComponentWithState />
-              | RenderAComponent(x) => <aComponent testVal=x />
-              };
-            },
+              useStateExperimental(RenderAComponentWithState, ((s, setS)) =>
+                useEffectExperimental(
+                  () => {
+                    let unsubscribe = Event.subscribe(event, v => setS(v));
+                    () => unsubscribe();
+                  },
+                  () =>
+                    switch (s) {
+                    /* | Nothing => () */
+                    | RenderAComponentWithState => <ComponentWithState />
+                    | RenderAComponent(x) => <aComponent testVal=x />
+                    },
+                )
+              ),
             ~children,
           )
         )

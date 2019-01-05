@@ -16,7 +16,7 @@ let bComponent = (~children, ()) => primitiveComponent(B, ~children);
 let cComponent = (~children, ()) => primitiveComponent(C, ~children);
 
 module ComponentWrappingB = (
-  val component((render, ~children, ()) =>
+  val createComponent((render, ~children, ()) =>
         render(() => <bComponent />, ~children)
       )
 );
@@ -35,7 +35,7 @@ test("StatelessComponentTest", () => {
   });
 
   module ComponentWrappingAWithProps = (
-    val component((render, ~children, ~v, ()) =>
+    val createComponent((render, ~children, ~v, ()) =>
           render(() => <aComponent testVal=v />, ~children)
         )
   );
@@ -107,7 +107,7 @@ test("StatelessComponentTest", () => {
   });
 
   module ComponentWithWrappedComponents = (
-    val component((render, ~children, ()) =>
+    val createComponent((render, ~children, ()) =>
           render(
             () => <aComponent testVal=1> <ComponentWrappingB /> </aComponent>,
             ~children,
@@ -128,7 +128,7 @@ test("StatelessComponentTest", () => {
   });
 
   module ComponentThatRendersChildren = (
-    val component((render, ~children, ()) =>
+    val createComponent((render, ~children, ()) =>
           render(
             () => <aComponent testVal=1> ...children </aComponent>,
             ~children,
@@ -171,11 +171,13 @@ test("StatelessComponentTest", () => {
   });
 
   module ComponentWithVisibilityToggle = (
-    val component((render, ~visible=true, ~children, ()) =>
-          render(() =>
-            visible ?
-              <aComponent testVal=1> ...children </aComponent> :
-              TestReact.empty
+    val createComponent((render, ~visible=true, ~children, ()) =>
+          render(
+            () =>
+              visible ?
+                <aComponent testVal=1> ...children </aComponent> :
+                TestReact.empty,
+            ~children,
           )
         )
   );
