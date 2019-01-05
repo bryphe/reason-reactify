@@ -16,7 +16,7 @@ let bComponent = (~children, ()) => primitiveComponent(B, ~children);
 let cComponent = (~children, ()) => primitiveComponent(C, ~children);
 
 module CustomComponent = (
-  val component((render, ~children, ()) =>
+  val createComponent((render, ~children, ()) =>
         render(
           () =>
             <aComponent testVal=1> <bComponent /> <bComponent /> </aComponent>,

@@ -152,18 +152,19 @@ let reducer = (state, action) =>
   | Decrement => state - 1
   };
 
-let renderCounter = () => {
-  let (count, dispatch) = useReducer(reducer, 0);
-
-  <view>
-    <button title="Decrement" onPress={() => dispatch(Decrement)} />
-    <text> {"Counter: " ++ str(count)} </text>
-    <button title="Increment" onPress={() => dispatch(Increment)} />
-  </view>;
-};
+let renderCounter = () =>
+  useReducerExperimental(reducer, 0, ((count, dispatch)) =>
+    <view>
+      <button title="Decrement" onPress={() => dispatch(Decrement)} />
+      <text> {"Counter: " ++ str(count)} </text>
+      <button title="Increment" onPress={() => dispatch(Increment)} />
+    </view>
+  );
 
 module CounterButtons = (
-  val component((render, ~children, ()) => render(renderCounter, ~children))
+  val createComponent((render, ~children, ()) =>
+        render(renderCounter, ~children)
+      )
 );
 
 /* Create a container for our UI */
