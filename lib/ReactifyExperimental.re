@@ -1,12 +1,37 @@
-open Reactify_Types;
+open Reactify_TypesExperimental;
+
+exception InvalidOpaqueInstance(string);
 
 module Make = (ReconcilerImpl: Reconciler) => {
   /* Module to give us unique IDs for components */
   type elementWithChildren = (list(element), Effects.effects, Context.t)
   and render = unit => elementWithChildren
+  and component('slot, 'nextSlots) = {
+    initSlots: unit => Slots.t('slot, 'nextSlots),
+    render:
+      (
+        (
+          Slots.t('slot, 'nextSlots),
+          option(instance),
+          node,
+          element,
+          Context.t,
+          container,
+        )
+      ) =>
+      elementWithChildren,
+  }
+  and opaqueComponent =
+    | OpaqueComponent(component('slot, 'nextSlots)): opaqueComponent
+  and componentInstance('slot, 'nextSlots) = {
+    slots: Slots.t('slot, 'nextSlots),
+    component: component('slot, 'nextSlots),
+  }
+  and opaqueInstance =
+    | OpaqueInstance(componentInstance('slot, 'nextSlots)): opaqueInstance
   and element =
     | Primitive(ReconcilerImpl.primitives, render)
-    | Component(ComponentId.t, render)
+    | Component(ComponentId.t, opaqueComponent)
     | Provider(render)
     | Empty(render)
   /*
@@ -17,11 +42,11 @@ module Make = (ReconcilerImpl: Reconciler) => {
   and instance = {
     mutable element,
     children: list(element),
+    opaqueInstance: option(opaqueInstance), /* Only has value for instances of `Component()` elements. */
     node: option(ReconcilerImpl.node),
     rootNode: ReconcilerImpl.node,
     mutable childInstances,
     mutable effectInstances: Effects.effectInstances,
-    state: State.HeterogenousMutableList.t,
     context: Context.HeterogenousHashtbl.t,
     container: t,
   }
@@ -35,30 +60,9 @@ module Make = (ReconcilerImpl: Reconciler) => {
   and childInstances = list(instance)
   and hook('t) =
     | Hook(element, 't)
-  and state('s) =
-    | State('s)
-  and reducer('r) =
-    | Reducer('r)
-  and effect =
-    | Effect
-  and context('t) =
-    | Context('t)
-  and emptyHook = hook(unit);
+  and node = ReconcilerImpl.node;
 
-  type node = ReconcilerImpl.node;
   type primitives = ReconcilerImpl.primitives;
-
-  /*
-     Internal helpers to aid the hooks type representation,
-     the wrapping variants could be optimized away in the future as they're not used at runtime
-   */
-  let addHook = (newHook, Hook(element, h)) => Hook(element, (h, newHook));
-  let addState = (~state as s) => addHook(State(s));
-  let addEffect = element => addHook(Effect, element);
-  let addReducer = (~reducer as r) => addHook(Reducer(r));
-  let addContext = (~value as v) => addHook(Context(v));
-  let elementToHook = x => Hook(x, ());
-  let elementFromHook = (Hook(x, _)) => x;
 
   /*
      A global, non-pure container to hold effects
@@ -74,16 +78,6 @@ module Make = (ReconcilerImpl: Reconciler) => {
    */
   let noContext = Context.create();
   let __globalContext = ref(noContext);
-
-  /*
-     State management for reconciliation
-   */
-  module ComponentStateContext = {
-    type t = instance;
-  };
-  module ComponentState = State.Make(ComponentStateContext);
-  let noState = ComponentState.create([]);
-  let __globalState = ref(noState);
 
   /*
      Container API
@@ -123,18 +117,18 @@ module Make = (ReconcilerImpl: Reconciler) => {
     ret;
   };
 
-  let empty: emptyHook =
-    elementToHook(Empty(() => ([], [], __globalContext^)));
+  let empty = Empty(_slots => ([], [], __globalContext^));
 
-  let render = (id: ComponentId.t, lazyElement, ~children) => {
+  let render = (id: ComponentId.t, userRender, ~children) => {
     ignore(children);
-    let ret: emptyHook =
-      elementToHook(
-        Component(
-          id,
-          () => {
+    let ret =
+      Component(
+        id,
+        OpaqueComponent({
+          initSlots: () => Slots.create(),
+          render: slots => {
             Effects.resetEffects(__globalEffects);
-            let childElement = lazyElement() |> elementFromHook;
+            let childElement = userRender(slots);
             let children = [childElement];
             let effects = Effects.getEffects(__globalEffects);
             let renderResult: elementWithChildren = (
@@ -144,13 +138,13 @@ module Make = (ReconcilerImpl: Reconciler) => {
             );
             renderResult;
           },
-        ),
+        }),
       );
     ret;
   };
 
   module type Component = {
-    type hooks;
+    type slots;
     type createElement;
     let createElement: createElement;
   };
@@ -158,37 +152,45 @@ module Make = (ReconcilerImpl: Reconciler) => {
   let createComponent =
       (
         type c,
-        type h,
+        type s,
         create:
-          ((unit => hook(h), ~children: list(emptyHook)) => emptyHook) => c,
+          (
+            (
+              (
+                (
+                  Slots.t(s, _),
+                  option(instance),
+                  node,
+                  element,
+                  Context.t,
+                  container,
+                )
+              ) =>
+              element,
+              ~children: list(element)
+            ) =>
+            element
+          ) =>
+          c,
       )
-      : (module Component with type createElement = c and type hooks = h) => {
+      : (module Component with type createElement = c and type slots = s) => {
     let id = ComponentId.newId(_uniqueIdScope);
     let boundFunc = create(render(id));
     (module
      {
-       type hooks = h;
+       type slots = s;
        type createElement = c;
        let createElement = boundFunc;
      });
   };
-  let component = createComponent;
 
-  let primitiveComponent = (~children, prim) => {
-    let comp: emptyHook =
-      elementToHook(
-        Primitive(
-          prim,
-          () => (List.map(elementFromHook, children), [], __globalContext^),
-        ),
-      );
-    comp;
-  };
+  let primitiveComponent = (~children, prim) =>
+    Primitive(prim, _slots => (children, [], __globalContext^));
 
   /* Context */
   let __contextId = ref(0);
   type providerConstructor('t) =
-    (~children: list(emptyHook), ~value: 't, unit) => emptyHook;
+    (~children: list(element), ~value: 't, unit) => element;
   type contextValue('t) = {
     initialValue: 't,
     id: int,
@@ -202,20 +204,15 @@ module Make = (ReconcilerImpl: Reconciler) => {
   };
 
   let getProvider = ctx => {
-    let provider = (~children, ~value, ()) => {
-      let ret: emptyHook =
-        elementToHook(
-          Provider(
-            () => {
-              let contextId = ctx.id;
-              let context = Context.clone(__globalContext^);
-              Context.set(context, contextId, Object.to_object(value));
-              (List.map(elementFromHook, children), [], context);
-            },
-          ),
-        );
-      ret;
-    };
+    let provider = (~children, ~value, ()) =>
+      Provider(
+        _slots => {
+          let contextId = ctx.id;
+          let context = Context.clone(__globalContext^);
+          Context.set(context, contextId, Object.to_object(value));
+          (children, [], context);
+        },
+      );
     provider;
   };
 
@@ -228,27 +225,12 @@ module Make = (ReconcilerImpl: Reconciler) => {
     value;
   };
 
-  let useContextExperimental = (ctx: contextValue('t), continuation) => {
-    let value = useContext(ctx);
-    continuation(value) |> addContext(~value);
-  };
-
   let useEffect =
       (
         ~condition: Effects.effectCondition=Effects.Always,
         e: Effects.effectFunction,
       ) =>
     Effects.addEffect(~condition, __globalEffects, e);
-
-  let useEffectExperimental =
-      (
-        ~condition: Effects.effectCondition=Effects.Always,
-        e: Effects.effectFunction,
-        continuation,
-      ) => {
-    useEffect(~condition, e);
-    continuation() |> addEffect;
-  };
 
   let _getEffectsFromInstance = (instance: option(instance)) =>
     switch (instance) {
@@ -262,12 +244,6 @@ module Make = (ReconcilerImpl: Reconciler) => {
     | Some(i) => i.childInstances
     };
 
-  let _getCurrentStateFromInstance = (instance: option(instance)) =>
-    switch (instance) {
-    | None => []
-    | Some(i) => i.state
-    };
-
   let rec getFirstNode = (node: instance) =>
     switch (node.node) {
     | Some(n) => Some(n)
@@ -279,7 +255,7 @@ module Make = (ReconcilerImpl: Reconciler) => {
       }
     };
 
-  let isInstanceOfComponent = (instance: option(instance), element: element) =>
+  let isInstanceOfElement = (instance: option(instance), element: element) =>
     switch (instance) {
     | None => false
     | Some(x) =>
@@ -303,41 +279,63 @@ module Make = (ReconcilerImpl: Reconciler) => {
             context: Context.t,
             container: t,
           ) => {
-    let previousState = ref([]);
-
     /* Recycle any previous effect instances */
     let previousEffectInstances = _getEffectsFromInstance(previousInstance);
 
     let isSameInstanceAsBefore =
-      isInstanceOfComponent(previousInstance, element);
+      isInstanceOfElement(previousInstance, element);
 
-    if (isSameInstanceAsBefore) {
-      /* Set up state for the component */
-      previousState := _getCurrentStateFromInstance(previousInstance);
-    };
-
-    let state = ComponentState.create(previousState^);
-    /* We hold onto a reference to the component instance - we need to set this _after_ the component is instantiated */
-    let stateContext = ComponentState.getCurrentContext(state);
-
-    /*
-         This is dirty, but we set the 'global' state so that the 'useState'
-         can have access to it, without additional binding or passing. This is
-         necessary to preserve the semantics of the React-style API
-     */
-    __globalState := state;
     __globalContext := context;
-    let (children, effects, newContext) =
+    let ((children, effects, newContext), opaqueInstance) =
       switch (element) {
       | Primitive(_, render)
-      | Component(_, render)
       | Provider(render)
-      | Empty(render) => render()
+      | Empty(render) => (render(), None)
+      | Component({id, _}, OpaqueComponent(component)) =>
+        switch (isSameInstanceAsBefore, previousInstance) {
+        | (false, _) =>
+          let innerInstance = {slots: component.initSlots(), component};
+          let instance = OpaqueInstance(innerInstance);
+          (
+            innerInstance.component.render((
+              innerInstance.slots,
+              previousInstance,
+              rootNode,
+              element,
+              context,
+              container,
+            )),
+            Some(instance),
+          );
+        | (
+            true,
+            Some({
+              opaqueInstance:
+                Some(OpaqueInstance(innerInstance)) as prevOpaqueInstance,
+              _,
+            }),
+          ) => (
+            innerInstance.component.render((
+              innerInstance.slots,
+              previousInstance,
+              rootNode,
+              element,
+              context,
+              container,
+            )),
+            prevOpaqueInstance,
+          )
+        | (true, _) =>
+          raise(
+            InvalidOpaqueInstance(
+              "`isSameInstanceAsBefore` is true but could not find opaque instance when rendering component with id "
+              ++ string_of_int(id),
+            ),
+          )
+        }
       };
     /* Once rendering is complete, we don't need this anymore */
     __globalContext := noContext;
-    __globalState := noState;
-    let newState = ComponentState.getNewState(state);
 
     let newEffectCount = List.length(effects);
 
@@ -383,17 +381,10 @@ module Make = (ReconcilerImpl: Reconciler) => {
       children,
       childInstances,
       effectInstances: newEffectInstances,
-      state: newState,
+      opaqueInstance,
       context: newContext,
       container,
     };
-
-    /*
-         'context' is the instance that state needs when 'setState' is called
-         We set it here, after the instance is fully realized, so that the 'setState'
-         callback has the latest state for the component instance.
-     */
-    stateContext := Some(instance);
 
     instance;
   }
@@ -514,51 +505,40 @@ module Make = (ReconcilerImpl: Reconciler) => {
     newChildInstances^;
   };
 
-  let useReducer =
-      (reducer: ('state, 'action) => 'state, initialState: 'state) => {
-    let globalState = __globalState^;
-    let componentState =
-      ComponentState.popOldState(globalState, initialState);
-
-    let (getState, updateState) =
-      ComponentState.pushNewState(globalState, componentState);
-
-    let currentContext = ComponentState.getCurrentContext(globalState);
-
-    let dispatch = (context: ref(option(instance)), action: 'action) => {
-      let newVal = reducer(getState(), action);
-      updateState(newVal);
-      switch (context^) {
-      | Some(i) =>
-        let {rootNode, element, _} = i;
-        Event.dispatch(i.container.onBeginReconcile, rootNode);
-        let _ =
-          reconcile(rootNode, Some(i), element, i.context, i.container);
-        Event.dispatch(i.container.onEndReconcile, rootNode);
-        ();
-      | _ => print_endline("WARNING: Skipping reconcile!")
-      };
-    };
-
-    (componentState, dispatch(currentContext));
-  };
-
-  let _useReducerExperimental =
+  let useReducer:
+    (
+      ('state, 'action) => 'state,
+      'state,
       (
-        reducer: ('state, 'action) => 'state,
-        initialState: 'state,
-        continuation,
-      ) =>
-    continuation(useReducer(reducer, initialState));
+        Slots.t('state, Slots.t('slot, 'nextSlots)),
+        option(instance),
+        node,
+        element,
+        Context.t,
+        container,
+      )
+    ) =>
+    (('state, 'action => unit), Slots.t('slot, 'nextSlots)) =
+    (
+      reducer,
+      initialState,
+      (slots, previousInstance, rootNode, element, context, container),
+    ) => {
+      let ((state, setState), nextSlots) =
+        Slots.use(~default=initialState, slots);
 
-  /*
-     There's an internal and a public version of `useReducer`. The internal version,
-     which has no "hooks types propagation", allows to keep the types in `useState`
-     (which reuses `useReducer`) simpler
-   */
-  let useReducerExperimental = (reducer, initialState, continuation) =>
-    _useReducerExperimental(reducer, initialState, continuation)
-    |> addReducer(~reducer);
+      let dispatch = (action: 'action) => {
+        let newVal = reducer(state, action);
+        setState(newVal);
+        Event.dispatch(container.onBeginReconcile, rootNode);
+        let _ =
+          reconcile(rootNode, previousInstance, element, context, container);
+        Event.dispatch(container.onEndReconcile, rootNode);
+        ();
+      };
+
+      ((state, dispatch), nextSlots);
+    };
 
   type useStateAction('a) =
     | SetState('a);
@@ -567,36 +547,19 @@ module Make = (ReconcilerImpl: Reconciler) => {
     | SetState(newState) => newState
     };
 
-  let useState = initialState => {
-    let (componentState, dispatch) =
-      useReducer(useStateReducer, initialState);
+  let useState = (initialState, slots) => {
+    let ((componentState, dispatch), nextSlots) =
+      useReducer(useStateReducer, initialState, slots);
     let setState = newState => dispatch(SetState(newState));
-    (componentState, setState);
+    ((componentState, setState), nextSlots);
   };
 
-  let useStateExperimental = (initialState, continuation) =>
-    _useReducerExperimental(
-      useStateReducer,
-      initialState,
-      ((componentState, dispatch)) => {
-        let setState = newState => dispatch(SetState(newState));
-        continuation((componentState, setState))
-        |> addState(~state=initialState);
-      },
-    );
-
-  let updateContainer = (container, hook) => {
+  let updateContainer = (container, element) => {
     let {containerNode, rootInstance, onBeginReconcile, onEndReconcile} = container;
     let prevInstance = rootInstance^;
     Event.dispatch(onBeginReconcile, containerNode);
     let nextInstance =
-      reconcile(
-        containerNode,
-        prevInstance,
-        elementFromHook(hook),
-        noContext,
-        container,
-      );
+      reconcile(containerNode, prevInstance, element, noContext, container);
     rootInstance := Some(nextInstance);
     Event.dispatch(onEndReconcile, containerNode);
   };

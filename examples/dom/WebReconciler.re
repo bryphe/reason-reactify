@@ -127,7 +127,7 @@ module Reconciler = {
 };
 
 /* Step 5: Hook it up! */
-module JsooReact = Reactify.Make(Reconciler);
+module JsooReact = Reactify__ReactifyExperimental.Make(Reconciler);
 open JsooReact;
 
 /* Define our primitive components */
@@ -152,14 +152,14 @@ let reducer = (state, action) =>
   | Decrement => state - 1
   };
 
-let renderCounter = () =>
-  useReducerExperimental(reducer, 0, ((count, dispatch)) =>
-    <view>
-      <button title="Decrement" onPress={() => dispatch(Decrement)} />
-      <text> {"Counter: " ++ str(count)} </text>
-      <button title="Increment" onPress={() => dispatch(Increment)} />
-    </view>
-  );
+let renderCounter = slots => {
+  let ((count, dispatch), _slots) = slots |> useReducer(reducer, 0);
+  <view>
+    <button title="Decrement" onPress={() => dispatch(Decrement)} />
+    <text> {"Counter: " ++ str(count)} </text>
+    <button title="Increment" onPress={() => dispatch(Increment)} />
+  </view>;
+};
 
 module CounterButtons = (
   val createComponent((render, ~children, ()) =>
