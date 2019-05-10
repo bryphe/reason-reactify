@@ -5,6 +5,7 @@
   * This is just an example but you could use this to create interesting
   * CLI apps, with a react-like functional API!
 */
+open Js_of_ocaml
 
 exception InvalidNodePrimitiveMatchInUpdateInstance;
 
